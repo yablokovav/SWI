@@ -1,0 +1,78 @@
+# Основной управляющий файл, задает основные параметры для обработки данных методом SWI
+preprocessing:
+  path4ffid_file:
+  ffid_start: 0
+  ffid_stop: 0
+  ffid_increment: 0
+  num_sources_on_cpu: 1
+
+  data_dir: C:\Users\YablokovAV\PycharmProjects\SWI\data\data_2d_synth
+  type_data: 2d
+  offset_min: 0
+  offset_max: 100
+  qc_preprocessing: True
+  snr: 0.5
+
+  parameters_3d:
+    sort_3d_order: csp
+    num_sectors: 10
+    bin_size_x: 50
+    bin_size_y: 50
+
+spectral:
+  spectral_method: sfk
+  fmin: 0
+  fmax: 30
+  vmin: 100
+  vmax: 1500
+  path4dc_limits: C:\Users\YablokovAV\PycharmProjects\SWI\configs\synth_2d\dc_limits.csv
+  extract_dc_method: dbscan
+  qc_spectral: True
+
+  advanced:
+    desired_nt: 500
+    desired_nx: 500
+    smooth_data: True
+    width: 2
+    peak_fraction: 0.75
+    cutoff_fraction: 0.2
+    dc_error_thr: 0.9
+
+inversion:
+  inversion_method: occam
+  niter: 80
+  max_num_modes: 1
+  wavetype: rayleigh
+  veltype: phase
+  path4vp_model: C:\Users\YablokovAV\PycharmProjects\SWI\configs\synth_2d\vp_model.csv
+  vp_model: vp2vs
+  lock_vp: False
+  qc_inversion: True
+
+  local_search:
+    nlay: 25
+
+  global_search:
+    test_count: 1
+    path4vs_limits:
+    xi: 2
+    get_num_layers: every
+
+postprocessing:
+  max_depth: 50
+  d_x: 5
+  d_y: 5
+  d_z: 1
+  smooth_factor: 10
+  remove_outliers_smoothing: True
+  vmin_in_model: 100
+  vmax_in_model: 1200
+  save_segy: False
+  error_thr: 0.3
+
+  parameters_2d:
+    interp_dim: 1d
+
+  parameters_3d:
+    num_xslices_3d: 3
+    num_yslices_3d: 3

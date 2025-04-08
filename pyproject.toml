@@ -1,0 +1,80 @@
+[tool.poetry]
+name = "swi"
+version = "0.1.0"
+description = ""
+authors = ["yablokov <yablokov.alexandr93@gmail.com>"]
+readme = "README.md"
+packages = [{include = "src", from = "."}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+numpy = "2.0"
+matplotlib = "^3.9.2"
+scipy = "^1.14.1"
+ipykernel = "^6.29.5"
+segyio = "^1.9.12"
+tqdm = "^4.66.5"
+ipywidgets = "^8.1.5"
+scikit-learn = "^1.5.2"
+llvmlite = "^0.43.0"
+disba = "^0.6.1"
+pydantic = "^2.9.2"
+pyyaml = "^6.0.2"
+joblib = "^1.4.2"
+pandas = "^2.2.3"
+stockwell = "^1.1.2"
+loguru = "^0.7.2"
+plotly = "^5.24.1"
+opencv-python = "^4.10.0.84"
+hdbscan = "^0.8.40"
+statsmodels = "^0.14.4"
+screeninfo = "^0.8.1"
+ricker = "^0.1.2"
+
+
+[tool.poetry.group.dev.dependencies]
+commitizen = "^3.29.1"
+ruff = "^0.6.8"
+mypy = "^1.11.2"
+pre-commit = "^3.8.0"
+wemake-python-styleguide = "^0.19.2"
+pyupgrade = "^3.17.0"
+nbqa = "^1.9.0"
+nbstripout = "^0.7.1"
+poetry-plugin-export = "^1.8.0"
+vulture = "^2.13"
+
+[tool.mypy]
+# Import discovery
+ignore_missing_imports = true
+# Untyped definitions and calls
+disallow_untyped_calls = true
+disallow_untyped_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+# Configuring warnings
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_unreachable = true
+# Miscellaneous strictness flags
+allow_redefinition = true
+disable_error_code = ["index", "assignment", "call-overload"]
+# Miscellaneous
+scripts_are_modules = true
+
+[tool.vulture]
+paths = ["src"]
+min_confidence = 70
+sort_by_size = true
+
+[tool.commitizen]
+name = "cz_conventional_commits"
+tag_format = "v$version"
+version_scheme = "semver"
+version_provider = "poetry"
+update_changelog_on_bump = true
+major_version_zero = true
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
