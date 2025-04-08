@@ -517,17 +517,47 @@ def mean_traces_with_equal_offsets(seism: np.ndarray, headers: np.ndarray) -> tu
 
 
 def get_snr(data: np.ndarray, dt: float, offsets: np.ndarray, vmin: float, vmax: float) -> float:
+    """
+    Estimates the Signal-to-Noise Ratio (SNR) of seismic data using hyperbolic moveout.
 
-    nt = data.shape[0]
-    vels_gr = np.linspace(vmin, vmax, 10)
-    vels_n = np.linspace(vmax, vmax + 3000, 10)
+    This function calculates the SNR by comparing the energy of the signal along hyperbolic
+    moveout curves with velocities between `vmin` and `vmax` (signal) to the energy along
+    similar curves with higher velocities (noise).
 
-    sum_gr, sum_n = 0, 0
-    for vel_gr, vel_n in zip(vels_gr, vels_n):
-        incline = np.min([np.int32( (np.min(offsets) + offsets) / vel_gr / dt), np.zeros_like(offsets) + nt-1])
-        sum_gr += np.sum(np.sum(np.abs(data[incline, :])))
+    Args:
+        A 2D NumPy array of seismic data (time x offset).
+        dt: The time sampling interval (in seconds).
+        offsets: A 1D NumPy array of offsets (in meters).
+        vmin: The minimum velocity (in m/s) for the signal range.
+        vmax: The maximum velocity (in m/s) for the signal range.
 
-        incline = np.min([np.int32( (np.min(offsets) + offsets) / vel_n / dt), np.zeros_like(offsets) + nt-1])
-        sum_n += np.max(np.sum(np.abs(data[incline, :])))
+    Returns:
+        The estimated Signal-to-Noise Ratio (SNR) as a float.  A higher SNR indicates a
+        stronger signal relative to the noise.
+    """
 
+    nt: int = data.shape[0]  # Number of time samples
+    vels_gr: np.ndarray = np.linspace(vmin, vmax, 10)  # Signal velocity range
+    vels_n: np.ndarray = np.linspace(vmax, vmax + 3000, 10)  # Noise velocity range
+
+    sum_gr: float = 0.0  # Initialize signal energy
+    sum_n: float = 0.0  # Initialize noise energy
+
+    for vel_gr, vel_n in zip(vels_gr, vels_n):  # Iterate through signal and noise velocities
+
+        # Calculate moveout times for signal velocity
+        incline_gr: np.ndarray = np.minimum(
+            np.int32((np.abs(offsets - np.min(offsets))) / vel_gr / dt),
+            np.zeros_like(offsets) + nt - 1
+        )
+        sum_gr += np.sum(np.abs(data[incline_gr, :]))  # Sum absolute amplitudes along moveout curve
+
+        # Calculate moveout times for noise velocity
+        incline_n: np.ndarray = np.minimum(
+            np.int32((np.abs(offsets - np.min(offsets))) / vel_n / dt),
+            np.zeros_like(offsets) + nt - 1
+        )
+        sum_n += np.sum(np.abs(data[incline_n, :]))  # Sum absolute amplitudes along moveout curve
+
+    # Calculate and return SNR
     return sum_gr / sum_n
