@@ -89,8 +89,8 @@ def log_one_flank(header: np.ndarray, flank_id: int, snr: float) -> tuple[float,
 
     log_flank += f"Flank {flank_id} "
 
-    log_flank += f"SNR: {round(snr, 2)} "  # Value of SNR
-    log_flank += " " * (WIDTH_FOR_RP - len(f"SNR: {round(snr, 2)}, "))  # Align columns
+    log_flank += f"SNR: %.2f " % snr  # Value of SNR
+    log_flank += " " * (WIDTH_FOR_RP - len(f"SNR: %.2f " % snr))  # Align columns
 
     log_flank += "\n"
 
@@ -151,8 +151,8 @@ def create_table_preprocessing_3d_csp(item: int, header: np.ndarray, snr: float)
     sectors += f"CMP: [{cmp_x} {cmp_y}] "  # CMP Coordinates
     sectors += " " * (COLL_SIZE - len(f"CMP [{cmp_x} {cmp_y}],"))  # Align columns
 
-    sectors += f"SNR: {round(snr, 2)} "
-    sectors += " " * (WIDTH_FOR_RP - len(f"SNR: {round(snr, 2)} "))
+    sectors += f"SNR: %.2f " % snr
+    sectors += " " * (WIDTH_FOR_RP - len(f"SNR: %.2f " % snr))
 
     sectors += "\n"
     return ffid, item, sectors  # Return values and the string
@@ -196,8 +196,8 @@ def create_table_preprocessing_3d_cdp(expand_headers: np.ndarray, snr: float) ->
     sectors += f"Ntr: {number_traces}"  # Number of traces
     sectors += " " * (WIDTH_FOR_RP - len(f"Ntr: {number_traces}"))
 
-    sectors += f"SNR: {round(snr, 2)} "
-    sectors += " " * (WIDTH_FOR_RP - len(f"SNR: {round(snr, 2)} "))
+    sectors += f"SNR: %.2f " % snr
+    sectors += " " * (WIDTH_FOR_RP - len(f"SNR: %.2f " % snr))
 
     sectors += "\n"
     return cdp_x, cdp_y, sectors  # Return values and the formatted string

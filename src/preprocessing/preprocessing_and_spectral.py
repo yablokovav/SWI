@@ -402,6 +402,7 @@ class SeismicPreprocessorSpectral:
                 # Отбраковка сейсмограмм по S / N
                 snr = utils.get_snr(cut_seismic, dt, cut_headers[HEADER_OFFSET_IND], self.vmin, self.vmax)
 
+
                 if snr >= self.user_snr:
                     # Spectral processing
                     valid_modes, cut_headers = utils.apply_spectral_processing(

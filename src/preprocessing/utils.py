@@ -2,7 +2,9 @@ from collections.abc import Generator
 from typing import Optional, Any
 
 import numpy as np
+from matplotlib import pyplot as plt
 from numba import njit
+from pygments.lexer import include
 from scipy.signal import detrend
 from sklearn.cluster import KMeans
 from src.files_processor.savers import save_segy
@@ -305,7 +307,6 @@ def apply_spectral_processing(
             save_path = config_parameters.save_dir_preprocessing[0] / f"{spec_name}{file_path.suffix}"
             save_segy(save_path, seism_traces, seism_header, name_headers, dt)
 
-
     spec_dc_dir, spec_image_dir, spec_segy_dir = config_parameters.save_dir_spectral
     valid_modes = spectral_processing(
         seism_traces, seism_header, dt, define_spatial_step(seism_header),  # Seismogram
@@ -514,42 +515,19 @@ def mean_traces_with_equal_offsets(seism: np.ndarray, headers: np.ndarray) -> tu
 
     return seism_averaged, headers_unique
 
-@njit(fastmath=True)
+
 def get_snr(data: np.ndarray, dt: float, offsets: np.ndarray, vmin: float, vmax: float) -> float:
-    """
-    Applies a time-variant mute to seismic data based on offset and velocity.
-
-    This function mutes (sets to zero) the early arrival times in seismic data based on a
-    defined velocity and offset. This is a common technique to remove unwanted noise or
-    refractions that arrive before the desired reflections.
-
-    Args:
-        data (np.ndarray): 2D NumPy array representing the seismic data. The shape is (time samples, receivers).
-        dt (float): The time sampling interval in seconds.
-        offsets (np.ndarray): 1D NumPy array of receiver offsets in meters.
-        vmin (float): The muting minimal velocity in meters per second.
-        vmax (float): The muting maximum velocity in meters per second.
-
-    Returns:
-        np.ndarray: The muted seismic data (same shape as input `data`).
-    """
 
     nt = data.shape[0]
-    picks_shift: float = np.min(offsets) / (vmax + 1e-7)  # Time shift based on minimum offset and velocity (avoiding division by zero)
-    picks_max: np.ndarray = offsets / vmax + picks_shift  # Arrival times for each receiver
+    vels_gr = np.linspace(vmin, vmax, 10)
+    vels_n = np.linspace(vmax, vmax + 3000, 10)
 
-    picks_shift: float = np.min(offsets) / (vmin + 1e-7)  # Time shift based on minimum offset and velocity (avoiding division by zero)
-    picks_min: np.ndarray = np.clip(offsets / vmin + picks_shift, a_min = 0, a_max = nt*dt)  # Arrival times for each receiver
+    sum_gr, sum_n = 0, 0
+    for vel_gr, vel_n in zip(vels_gr, vels_n):
+        incline = np.min([np.int32( (np.min(offsets) + offsets) / vel_gr / dt), np.zeros_like(offsets) + nt-1])
+        sum_gr += np.sum(np.sum(np.abs(data[incline, :])))
 
-    signal = np.copy(data)
-    for irec in range(len(picks_max)):  # Iterate over each receiver
-        signal[: int(picks_max[irec] / dt), irec] = 0  # Mute data before the calculated arrival time
-        signal[int(picks_min[irec] / dt) : , irec] = 0  # Mute data before the calculated arrival time
-    noise = data - signal
+        incline = np.min([np.int32( (np.min(offsets) + offsets) / vel_n / dt), np.zeros_like(offsets) + nt-1])
+        sum_n += np.max(np.sum(np.abs(data[incline, :])))
 
-    signal_energy = np.sum(np.abs(signal))
-    noise_energy = np.sum(np.abs(noise))
-
-    snr = signal_energy / noise_energy
-
-    return snr
+    return sum_gr / sum_n
