@@ -2,7 +2,7 @@ from collections.abc import Generator
 from typing import Optional, Any
 
 import numpy as np
-from  numba import  jit
+from  numba import  njit
 from scipy.signal import detrend
 from sklearn.cluster import KMeans
 from src.files_processor.savers import save_segy
@@ -323,7 +323,7 @@ def apply_spectral_processing(
 
     return valid_modes, snr, seism_header
 
-@jit(nopython=True)
+@njit(fastmath=True)
 def mutual_correlation_function(signal_1: np.ndarray, signal_2: np.ndarray) -> np.ndarray:
     """
     Calculates the maximum value of the mutual correlation function between two signals.
