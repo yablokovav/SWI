@@ -4,14 +4,14 @@ preprocessing:
   ffid_stop: 4
   ffid_increment: 1
   num_sources_on_cpu: 1
-  path4ffid_file: C:\Users\YablokovAV\PycharmProjects\SWI\unittests\data\ffid.txt
+  path4ffid_file: C:\Users\BubnovEI\Desktop\SWI_fin\unittests\data\ffid.txt
 
 
-  data_dir: C:\Users\YablokovAV\PycharmProjects\SWI\unittests\data
+  data_dir: C:\Users\BubnovEI\Desktop\SWI_fin\unittests\data
   type_data: 3d
   offset_min: 100
   offset_max: 700
-  snr: 0.7
+  snr: 0.55
   qc_preprocessing: True
 
   parameters_3d:
@@ -27,7 +27,7 @@ spectral:
   vmin: 100
   vmax: 1400
   extract_dc_method: dbscan
-  path4dc_limits: C:\Users\YablokovAV\PycharmProjects\SWI\configs\real_3d\dc_limits.csv
+  path4dc_limits: C:\Users\BubnovEI\Desktop\SWI_fin\configs\real_3d\dc_limits.csv
   qc_spectral: True
 
   advanced:
@@ -47,7 +47,7 @@ inversion:
   veltype: phase
   vp_model: vp
   lock_vp: False
-  path4vp_model: C:\Users\YablokovAV\PycharmProjects\SWI\configs\real_3d\vp_model.csv
+  path4vp_model: C:\Users\BubnovEI\Desktop\SWI_fin\configs\real_3d\vp_model.csv
   qc_inversion: True
 
   global_search:

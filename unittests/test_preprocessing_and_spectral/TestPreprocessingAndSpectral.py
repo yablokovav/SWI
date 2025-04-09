@@ -4,7 +4,7 @@ environ['OMP_NUM_THREADS'] = '1'
 
 from src import root_dir
 from src.config_reader.load_params import ConfigReader
-from src.config_reader.models import SWIConfigModel, PostprocessingModel
+from src.config_reader.models import SWIConfigModel
 from src.config_reader.utils import create_directories
 from src.preprocessing.preprocessing_and_spectral import SeismicPreprocessorSpectral
 from utils import compare_npz_folders, compare_segy_folders
