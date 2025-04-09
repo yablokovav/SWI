@@ -29,7 +29,7 @@ https://python-poetry.org/docs/#installing-with-pipx).
 
 2. Клонируйте репозиторий:
    ```bash
-   git clone https://github.com/yablokovav/SWI.git
+   git clone https://github.com/yablokov/SWI.git
    ```
 
 3. Перейдите в директорию проекта:
