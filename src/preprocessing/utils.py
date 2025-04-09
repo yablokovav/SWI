@@ -2,9 +2,7 @@ from collections.abc import Generator
 from typing import Optional, Any
 
 import numpy as np
-from matplotlib import pyplot as plt
-from numba import njit
-from pygments.lexer import include
+from  numba import  jit
 from scipy.signal import detrend
 from sklearn.cluster import KMeans
 from src.files_processor.savers import save_segy
@@ -238,6 +236,7 @@ def get_part_data(
 
 
 
+
 def apply_spectral_processing(
         config_parameters,
         file_path: Path,
@@ -246,7 +245,7 @@ def apply_spectral_processing(
         dt: float,
         flank_id: int = None,
         num_sector: Optional[int] = 0,
-):
+) -> tuple[bool, float, np.ndarray]:
     """
     Applies spectral analysis to a section of seismic data.
 
@@ -307,16 +306,69 @@ def apply_spectral_processing(
             save_path = config_parameters.save_dir_preprocessing[0] / f"{spec_name}{file_path.suffix}"
             save_segy(save_path, seism_traces, seism_header, name_headers, dt)
 
-    spec_dc_dir, spec_image_dir, spec_segy_dir = config_parameters.save_dir_spectral
-    valid_modes = spectral_processing(
-        seism_traces, seism_header, dt, define_spatial_step(seism_header),  # Seismogram
-        spec_name, spec_dc_dir, spec_image_dir, spec_segy_dir,  # Name and directories
-        config_parameters.peaker, config_parameters.peak_fraction, config_parameters.cutoff_fraction,  # peaker parameters
-        config_parameters.fk_transform, config_parameters.vf_transform,  # transformers
-        config_parameters.qc_spectral,  # QS parameter,
-        config_parameters.dc_error_thr
+    snr = get_snr(
+        seism_traces,
+        seism_header[HEADER_OFFSET_IND],
+        config_parameters.vmin,
+        config_parameters.vmax,
+        dt,
     )
-    return valid_modes, seism_header
+
+    if snr >= config_parameters.user_snr:
+        valid_modes = spectral_processing(config_parameters,
+            seism_traces, seism_header, dt, define_spatial_step(seism_header), spec_name  # Seismogram
+        )
+    else:
+        valid_modes = True
+
+    return valid_modes, snr, seism_header
+
+@jit(nopython=True)
+def mutual_correlation_function(signal_1: np.ndarray, signal_2: np.ndarray) -> np.ndarray:
+    """
+    Calculates the maximum value of the mutual correlation function between two signals.
+    The signals should have the same length.
+    """
+    m = len(signal_1)
+    mcf_tmp = np.zeros(m)
+    for k in range(m):
+         for j in range(m - 1 - k):
+            mcf_tmp[k] += signal_1[j] * signal_2[j + k]
+    return np.max(mcf_tmp)
+
+def get_snr(data, offsets, vmin, vmax, dt) -> float:
+    """
+    Calculates the signal-to-noise ratio (SNR) based on the maximum value of mutual correlation function.
+
+    Args:
+        data (np.ndarray): Seismic data (time x traces).
+        offsets (np.ndarray): Offsets of the traces.
+        vmin (float): Minimum velocity.
+        vmax (float): Maximum velocity.
+        dt (float): Time sampling interval.
+
+    Returns:
+        float: The calculated signal-to-noise ratio.
+    """
+
+    nt = data.shape[0]
+    pick_min = np.minimum(np.int32(offsets/vmax/dt), np.zeros_like(offsets) + nt - 1)
+    pick_max = np.minimum(np.int32(offsets/vmin/dt), np.zeros_like(offsets) + nt - 1)
+    mask = pick_min != pick_max
+    indexes = np.where(mask)[0]
+
+    mcf = np.zeros(len(indexes) - 1)
+    for i in range(len(indexes[:-1])):
+        signal1 = data[pick_min[indexes[i]]:pick_max[indexes[i]], indexes[i]]
+        signal2 = data[pick_min[indexes[i]]:pick_max[indexes[i]], indexes[i+1]]
+        mcf[i] = (mutual_correlation_function(signal1, signal2) /
+                  (np.sqrt(np.sum(signal1**2)) * np.sqrt(np.sum(signal2**2))))
+
+    mkf_mean = np.mean(mcf)
+    snr = mkf_mean/(1- mkf_mean)
+    return round(snr, 2)
+
+
 
 
 def find_points_in_square(center: np.ndarray, base: float, points: np.ndarray) -> list[int]:
@@ -515,49 +567,3 @@ def mean_traces_with_equal_offsets(seism: np.ndarray, headers: np.ndarray) -> tu
 
     return seism_averaged, headers_unique
 
-
-def get_snr(data: np.ndarray, dt: float, offsets: np.ndarray, vmin: float, vmax: float) -> float:
-    """
-    Estimates the Signal-to-Noise Ratio (SNR) of seismic data using hyperbolic moveout.
-
-    This function calculates the SNR by comparing the energy of the signal along hyperbolic
-    moveout curves with velocities between `vmin` and `vmax` (signal) to the energy along
-    similar curves with higher velocities (noise).
-
-    Args:
-        A 2D NumPy array of seismic data (time x offset).
-        dt: The time sampling interval (in seconds).
-        offsets: A 1D NumPy array of offsets (in meters).
-        vmin: The minimum velocity (in m/s) for the signal range.
-        vmax: The maximum velocity (in m/s) for the signal range.
-
-    Returns:
-        The estimated Signal-to-Noise Ratio (SNR) as a float.  A higher SNR indicates a
-        stronger signal relative to the noise.
-    """
-
-    nt: int = data.shape[0]  # Number of time samples
-    vels_gr: np.ndarray = np.linspace(vmin, vmax, 10)  # Signal velocity range
-    vels_n: np.ndarray = np.linspace(vmax, vmax + 3000, 10)  # Noise velocity range
-
-    sum_gr: float = 0.0  # Initialize signal energy
-    sum_n: float = 0.0  # Initialize noise energy
-
-    for vel_gr, vel_n in zip(vels_gr, vels_n):  # Iterate through signal and noise velocities
-
-        # Calculate moveout times for signal velocity
-        incline_gr: np.ndarray = np.minimum(
-            np.int32((np.abs(offsets - np.min(offsets))) / vel_gr / dt),
-            np.zeros_like(offsets) + nt - 1
-        )
-        sum_gr += np.sum(np.abs(data[incline_gr, :]))  # Sum absolute amplitudes along moveout curve
-
-        # Calculate moveout times for noise velocity
-        incline_n: np.ndarray = np.minimum(
-            np.int32((np.abs(offsets - np.min(offsets))) / vel_n / dt),
-            np.zeros_like(offsets) + nt - 1
-        )
-        sum_n += np.sum(np.abs(data[incline_n, :]))  # Sum absolute amplitudes along moveout curve
-
-    # Calculate and return SNR
-    return sum_gr / sum_n

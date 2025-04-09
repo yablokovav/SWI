@@ -6,7 +6,6 @@ from src import *
 from src.spectral_analysis.models import Seismogram
 from src.config_reader.models import DispersionCurve
 from src.files_processor.savers import save_spec_segy, save_spec_image
-from typing import Union
 
 def remove_outliers(x: np.ndarray, y: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     """
@@ -293,49 +292,43 @@ def check_approximation(dc: np.ndarray, dc_error_thr: float) -> int:
     return False if np.max(np.abs(dc - polynomial) / dc) > dc_error_thr else True
 
 
-def spectral_processing(traces: np.ndarray,
-                      headers: np.ndarray,
-                      dt: float,
-                      dx: float,
-                      spec_name: str,
-                      spec_dc_dir: Path,
-                      spec_image_dir: Path,
-                      spec_segy_dir: Path,
-                      peaker,
-                      peak_fraction: float,
-                      cutoff_fraction: float,
-                      fk_transform,
-                      vf_transform,
-                      qc_spectral: bool,
-                      dc_error_thr,
-                      ) -> bool:
+def spectral_processing(config_parameters,
+                        traces: np.ndarray,
+                        headers: np.ndarray,
+                        dt: float,
+                        dx: float,
+                        spec_name: str
+                        ) -> bool:
     """
     Performs spectral processing on seismic data.
 
-    This function performs a series of spectral analysis steps on seismic data,
-    including FK transform, VF transform, dispersion curve extraction, and curve
-    processing. It also saves the resulting spectral images and SEG-Y files if
-    `qc_spectral` is enabled.
+    This function implements a complete spectral analysis workflow for seismic data.
+    It computes FK and VF transforms, extracts dispersion curves, and performs curve
+    processing. The results can be saved as spectral images, SEG-Y files, and dispersion
+    curve data if quality control is enabled.
 
     Args:
-        traces (np.ndarray): NumPy array of seismic traces.
+        config_parameters: An object containing configuration parameters for the processing.
+                           This object should contain the following attributes:
+            - fk_transform: An object with a `run` method that computes the f-k spectrum.
+            - vf_transform: An object with a `run` method that computes the v-f spectrum.
+            - peaker: An object with a `peak_dc` method to extract dispersion curves.
+            - qc_spectral (bool): A flag indicating whether to save spectral images and SEG-Y files.
+            - dc_error_thr (float): Threshold for DC curves processing.
+            - peak_fraction (float): Parameter for peak extraction.
+            - cutoff_fraction (float): Parameter for peak extraction.
+            - save_dir_spectral:  A tuple (spec_dc_dir, spec_image_dir, spec_segy_dir) of pathlib.Path objects
+                spec_dc_dir (Path): Directory to save DC spectra.
+                spec_image_dir (Path): Directory to save spectral images.
+                spec_segy_dir (Path): Directory to save spectral SEG-Y files.
+        traces (np.ndarray): NumPy array of seismic traces (time x traces).
         headers (np.ndarray): NumPy array of seismic headers.
-        dt (float): The time sampling interval.
-        dx (float): The spatial step between traces.
-        spec_name (str): A name for the spectral data, used for file naming.
-        spec_dc_dir (str): Directory to save DC spectra.
-        spec_image_dir (str): Directory to save spectral images.
-        spec_segy_dir (str): Directory to save spectral SEG-Y files.
-        peaker (Peaker): An object with peak_dc method to extract dispersion curves.
-        peak_fraction (float): Parameter for peak extraction.
-        cutoff_fraction (float): Parameter for peak extraction.
-        fk_transform (FkTransform): An object with run method that computes the f-k spectrum.
-        vf_transform (VfTransform): An object with run method that computes the v-f spectrum.
-        qc_spectral (bool): A flag indicating whether to save spectral images and SEG-Y files.
-        dc_error_thr (float): Threshold for DC curves processing.
+        dt (float): The time sampling interval (in seconds).
+        dx (float): The spatial step between traces (e.g., in meters).
+        spec_name (str): A base name for the spectral data, used for file naming (without extension).
 
     Returns:
-        Union[None, bool]: Returns None if the function executes successfully.
+        bool: True if a dispersion curve was successfully extracted and saved, False otherwise.
     """
 
     # Create a Seismogram object from the traces, headers, dt, and dx
@@ -350,17 +343,22 @@ def spectral_processing(traces: np.ndarray,
     # Calculate the f-k spectrum using the fk_transform object
 
 
-    spectra = fk_transform.run(seismogram)
+    spectra = config_parameters.fk_transform.run(seismogram)
 
     # Calculate the v-f spectrum using the vf_transform object
-    vf_transform.run(spectra)
+    config_parameters.vf_transform.run(spectra)
 
     # Extract the dispersion curve (DC) using the peaker object
-    frequencies, dcs, freq_limits, lover_v, upper_v = peaker.peak_dc(spectra, peak_fraction, cutoff_fraction)
+    frequencies, dcs, freq_limits, lover_v, upper_v = config_parameters.peaker.peak_dc(
+        spectra, config_parameters.peak_fraction, config_parameters.cutoff_fraction
+    )
 
     # Curves processing
-    frequencies, dcs, flags_rejecting_modes = curves_processing(frequencies, dcs, dc_error_thr)
-    if qc_spectral:
+    frequencies, dcs, flags_rejecting_modes = curves_processing(frequencies, dcs, config_parameters.dc_error_thr)
+
+    spec_dc_dir, spec_image_dir, spec_segy_dir = config_parameters.save_dir_spectral
+
+    if config_parameters.qc_spectral:
         save_spec_image(spec_image_dir / f"{spec_name}.png",
                         spectra,
                         frequencies,

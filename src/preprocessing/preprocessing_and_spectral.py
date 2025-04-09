@@ -297,20 +297,14 @@ class SeismicPreprocessorSpectral:
                 if cut_seismic is not None:
                     count += 1 # collect amount of the processed shot gathers
 
-                    # get signal-to-noise ratio for current seismogram
-                    snr = utils.get_snr(cut_seismic, dt, cut_headers[HEADER_OFFSET_IND], self.vmin, self.vmax)
-
-                    if snr >= self.user_snr:
-                        valid_modes, cut_headers = utils.apply_spectral_processing(
-                            self,
-                            file_path,
-                            cut_seismic,
-                            cut_headers,
-                            dt,
-                            flank_id=flank_id,
-                        )
-                    else:
-                        valid_modes = True
+                    valid_modes, snr, cut_headers = utils.apply_spectral_processing(
+                        self,
+                        file_path,
+                        cut_seismic,
+                        cut_headers,
+                        dt,
+                        flank_id=flank_id,
+                    )
 
                     log_data = log_one_flank(cut_headers, flank_id, snr)  # add one log for data of one flank
                     table.append(log_data[2])  # append the log data
@@ -399,22 +393,15 @@ class SeismicPreprocessorSpectral:
                     axis=1
                 )
 
-                # Отбраковка сейсмограмм по S / N
-                snr = utils.get_snr(cut_seismic, dt, cut_headers[HEADER_OFFSET_IND], self.vmin, self.vmax)
-
-
-                if snr >= self.user_snr:
-                    # Spectral processing
-                    valid_modes, cut_headers = utils.apply_spectral_processing(
-                        self,
-                        file_path,
-                        cut_seismic,
-                        cut_headers,
-                        dt,
-                        num_sector=item
-                    )
-                else:
-                    valid_modes = True
+                # Spectral processing
+                valid_modes, snr, cut_headers = utils.apply_spectral_processing(
+                    self,
+                    file_path,
+                    cut_seismic,
+                    cut_headers,
+                    dt,
+                    num_sector=item
+                )
 
                 # Add segment information to the log
                 ffid_log = create_table_preprocessing_3d_csp(item, cut_headers, snr)
@@ -424,7 +411,7 @@ class SeismicPreprocessorSpectral:
                 if not valid_modes:
                     log_sources[-1] = log_sources[-1][:-2] + " Warning: no found valid modes\n"
                 elif snr < self.user_snr:
-                    log_sources[-1] = log_sources[-1][:-2] + " SNR is too low\n"
+                    log_sources[-1] = log_sources[-1][:-2] + " Warning: SNR is too low\n"
                 else:
                     curves_count += 1
 
@@ -481,18 +468,13 @@ class SeismicPreprocessorSpectral:
             if len(curr_headers[HEADER_OFFSET_IND]) < 10:
                 continue
 
-            snr = utils.get_snr(curr_traces, dt, curr_headers[HEADER_OFFSET_IND], self.vmin, self.vmax)
-
-            if snr >= self.user_snr:
-                valid_modes = utils.apply_spectral_processing(
+            valid_modes, snr, curr_headers = utils.apply_spectral_processing(
                     self,
                     file_path,
                     curr_traces,
                     curr_headers,
                     dt,
                 )
-            else:
-                valid_modes = True
 
             # Add segment information to the log
             cdp_log = create_table_preprocessing_3d_cdp(curr_headers, snr)
