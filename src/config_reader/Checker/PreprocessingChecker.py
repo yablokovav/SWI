@@ -14,6 +14,8 @@ PARAMS_PREPROCESSING = [
     'ffid_start',
     'ffid_stop',
     'ffid_increment',
+    'scaler_to_elevation',
+    'scaler_to_coordinates',
     'num_sources_on_cpu',
     'snr',
     'qc_preprocessing',
@@ -161,6 +163,30 @@ class PreprocessingChecker:
             str(self.preprocessing_config[key]) + check_type_data.message
         )
         return result, count_mistakes_preprocessing + check_type_data.is_error
+
+    def __check_scaler_to_elevation(self, count_mistakes_preprocessing: int, key: str) -> tuple[str, int]:
+        check_scaler_to_elevation = check_parameter_type_and_value(
+            self.preprocessing_config[key],
+            float,
+            [None, None],
+            [False, False]
+        )
+        result = (
+            str(self.preprocessing_config[key]) + check_scaler_to_elevation.message
+        )
+        return result, count_mistakes_preprocessing + check_scaler_to_elevation.is_error
+
+    def __check_scaler_to_coordinates(self, count_mistakes_preprocessing: int, key: str) -> tuple[str, int]:
+        check_scaler_to_coordinates = check_parameter_type_and_value(
+            self.preprocessing_config[key],
+            float,
+            [None, None],
+            [False, False]
+        )
+        result = (
+            str(self.preprocessing_config[key]) + check_scaler_to_coordinates.message
+        )
+        return result, count_mistakes_preprocessing + check_scaler_to_coordinates.is_error
 
     def __check_ffid(self, count_mistakes_preprocessing: int, keys: tuple) -> tuple[str, str, int]:
         """
@@ -478,6 +504,19 @@ class PreprocessingChecker:
                 count_mistakes_preprocessing,  # Pass current error count
                 'ffid_increment'  # Specify parameter to check
             )
+
+            (preprocessing_errors['scaler_to_elevation'],
+            count_mistakes_preprocessing) = self.__check_scaler_to_elevation(
+                count_mistakes_preprocessing,
+                'scaler_to_elevation'
+            )
+
+            (preprocessing_errors['scaler_to_coordinates'],
+             count_mistakes_preprocessing) = self.__check_scaler_to_coordinates(
+                count_mistakes_preprocessing,
+                'scaler_to_coordinates'
+            )
+
             (preprocessing_errors['path4ffid_file'],
              count_mistakes_preprocessing) = self.__check_path4ffid_file(
                 count_mistakes_preprocessing,  # Pass current error count

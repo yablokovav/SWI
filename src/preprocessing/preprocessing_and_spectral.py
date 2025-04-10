@@ -86,6 +86,8 @@ class SeismicPreprocessorSpectral:
         self.ffid_start = preprocessing.ffid_start
         self.ffid_stop = preprocessing.ffid_stop
         self.ffid_increment = preprocessing.ffid_increment
+        self.scaler_to_elevation = preprocessing.scaler_to_elevation
+        self.scaler_to_coordinates = preprocessing.scaler_to_coordinates
         self.path4ffid_file = preprocessing.path4ffid_file
         self.num_sources_on_cpu = preprocessing.num_sources_on_cpu
         self.data_dir = preprocessing.data_dir
@@ -232,6 +234,8 @@ class SeismicPreprocessorSpectral:
             sort_3d_order=self.sort_3d_order,
             endian=self.endian,
             bin_size=(self.bin_size_x, self.bin_size_y),
+            elevation_scaler=self.scaler_to_elevation,
+            coordinates_scaler=self.scaler_to_coordinates,
         )
         # Perform data division and preprocessing based on the sorting order (CSP or CDP)
         if self.type_data == '2d':

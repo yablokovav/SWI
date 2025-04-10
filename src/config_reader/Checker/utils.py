@@ -138,16 +138,17 @@ def check_valid_value(value: float | int, bounds: list, strict: list) -> Message
     Returns:
         Message: Result of the validation check.
     """
-    if strict[0]:  # Check the lower bound strictly
-        if value <= bounds[0]:
-            string = \
-                f" Error: Invalid parameter value. The value must be greater then {bounds[0]}"
-            return Message(is_error=True, message=string)
-    else:  # Check the lower bound non-strictly
-        if value < bounds[0]:
-            string = \
-                f" Error: Invalid parameter value. The value must be greater or equal then {bounds[0]}"
-            return Message(is_error=True, message=string)
+    if bounds[0] is not None:
+        if strict[0]:  # Check the lower bound strictly
+            if value <= bounds[0]:
+                string = \
+                    f" Error: Invalid parameter value. The value must be greater then {bounds[0]}"
+                return Message(is_error=True, message=string)
+        else:  # Check the lower bound non-strictly
+            if value < bounds[0]:
+                string = \
+                    f" Error: Invalid parameter value. The value must be greater or equal then {bounds[0]}"
+                return Message(is_error=True, message=string)
 
     if bounds[1] is not None:  # If there is an upper bound
         if strict[1]:  # Check the upper bound strictly

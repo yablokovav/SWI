@@ -4,6 +4,8 @@ preprocessing:
   ffid_start: 0
   ffid_stop: 0
   ffid_increment: 0
+  scaler_to_elevation: 0
+  scaler_to_coordinates: 0
   num_sources_on_cpu: 1
 
   data_dir: C:\Users\BubnovEI\Desktop\SWI_fin\data\data_2d_synth
