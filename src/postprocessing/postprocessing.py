@@ -1,6 +1,8 @@
 from pathlib import Path
 from typing import Optional
 import numpy as np
+from matplotlib import pyplot as plt
+from pandas.core.common import count_not_none
 from tqdm import tqdm
 from segyio import TraceField
 from joblib import Parallel, delayed
@@ -86,25 +88,6 @@ class VelocityModelVisualizer:
             self.coord[:, 0] = np.int32( self.coord[:, 0] / self.dx ) * self.dx + self.dx // 2
             self.coord[:, 1] = np.int32(self.coord[:, 1] / self.dy) * self.dy + self.dy // 2
 
-            # x = self.coord[:, 0]
-            # y = self.coord[:, 1]
-            # x_diff = np.abs(np.diff(x[np.lexsort([x, y])]))
-            # y_diff = np.abs(np.diff(y[np.lexsort([y, x])]))
-
-            # hist, bin_edges_x = np.histogram(x_diff, bins=np.arange(0, self.dx, self.dx//10))
-            # fist_5_freq_dx = bin_edges_x[np.argsort(hist)[::-1][:3]]
-            # hist, bin_edges_y = np.histogram(y_diff, bins=np.arange(0, self.dy, self.dy//10))
-            # fist_5_freq_dy = bin_edges_y[np.argsort(hist)[::-1][:3]]
-            # print("Mean dx in CMP:", fist_5_freq_dx, "Mean dy in CMP:", fist_5_freq_dy)
-            #
-            # fig, ax = plt.subplots(2, 1)
-            # ax[0].hist(x_diff, bins=bin_edges_x)
-            # ax[0].set_title("Histogram of steps by X")
-            # ax[1].hist(y_diff, bins=bin_edges_y)
-            # ax[1].set_title("Histogram of steps by Y")
-            # fig.tight_layout()
-            # fig.savefig("runs/Histogram of most frequently steps by X and Y CMP", dpi=100)
-
             #Preparing new grid
             num_models, num_layers = self.velocity.shape[0], self.velocity.shape[1]
             self.x_new = np.arange(min(self.coord[:, 0]), max(self.coord[:, 0]), self.dx)
@@ -122,14 +105,29 @@ class VelocityModelVisualizer:
 
             # Select 1d-models with the minimum error within bins
             self.coord, indexes, counts = np.unique(self.coord, axis=0, return_index=True, return_counts=True)
+
             uniq_velocities, uniq_relief = [], []
             for index, count in zip(indexes, counts):
-                ind_best_model = index + np.argmin(self.error[index : index + count])
-                uniq_velocities.append(self.output_model[:, ind_best_model])
-                # uniq_velocities.append(np.nanmean(self.output_model[:, index: index + count], axis=1)) Averaging 1d-models within bins
-                uniq_relief.append(np.mean(self.elevation[index: index + count]))
-            self.output_model, self.elevation = np.array(uniq_velocities).T, np.array(uniq_relief)
+                if count > 1:
+                    indx_sort = np.argsort(self.error[index: index + count])
+                    vels_cur = self.output_model[:, index + indx_sort]
+                    mask =  ~np.isnan(vels_cur[0])
+                    count_not_none = sum(mask)
+                    if count_not_none:
+                        vels_avg = np.average(
+                            vels_cur[:, mask],
+                            weights=np.linspace(1, 0, count_not_none),
+                            axis=1
+                        )
+                    else:
+                        vels_avg = np.squeeze(self.output_model[:, index])
+                else:
+                    vels_avg = np.squeeze(self.output_model[:, index: index + count])
 
+                uniq_velocities.append(vels_avg) # Averaging 1d-models within bins
+                uniq_relief.append(np.mean(self.elevation[index: index + count]))
+
+            self.output_model, self.elevation = np.array(uniq_velocities).T, np.array(uniq_relief)
 
             if  self.data_type == "2d":
                 projection = define_projection(self.coord)
@@ -146,7 +144,6 @@ class VelocityModelVisualizer:
                 save_model_to_bin(self.dir_save_bin / f'{key}', self.output_model, self.x_new, self.y_new, self.z_new, self.elevation, projection)
 
             else:
-                self.elevation = self.elevation/10000
                 # interpolation on regular grid by every depth slice
                 VelocityModelVisualizer.interp2d_by_depth_slices(self)
 
