@@ -114,7 +114,7 @@ class VelocityModelVisualizer:
                 raise ValueError('Interpolation Velocity Models Error:  dimension of interpolation too small, choose less dx od dy or dz.')
             self.size_x = len(self.x_new)
             self.size_y = len(self.y_new)
-            self.size_z = int(self.max_depth / self.dz)
+            self.size_z = int(np.ceil(self.max_depth / self.dz))
 
             # Interpolation all 1d-models to common depth
             VelocityModelVisualizer.interp1d_in_depth(self, num_models, num_layers)

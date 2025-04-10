@@ -6,7 +6,7 @@ preprocessing:
   ffid_increment: 0
   num_sources_on_cpu: 1
 
-  data_dir: C:\Users\YablokovAV\PycharmProjects\SWI\data\data_2d_synth
+  data_dir: C:\Users\BubnovEI\Desktop\SWI_fin\data\data_2d_synth
   type_data: 2d
   offset_min: 0
   offset_max: 100
@@ -25,7 +25,7 @@ spectral:
   fmax: 30
   vmin: 100
   vmax: 1500
-  path4dc_limits: C:\Users\YablokovAV\PycharmProjects\SWI\configs\synth_2d\dc_limits.csv
+  path4dc_limits: C:\Users\BubnovEI\Desktop\SWI_fin\configs\synth_2d\dc_limits.csv
   extract_dc_method: dbscan
   qc_spectral: True
 
@@ -44,7 +44,7 @@ inversion:
   max_num_modes: 1
   wavetype: rayleigh
   veltype: phase
-  path4vp_model: C:\Users\YablokovAV\PycharmProjects\SWI\configs\synth_2d\vp_model.csv
+  path4vp_model: C:\Users\BubnovEI\Desktop\SWI_fin\configs\synth_2d\vp_model.csv
   vp_model: vp2vs
   lock_vp: False
   qc_inversion: True

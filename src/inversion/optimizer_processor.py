@@ -164,7 +164,7 @@ def curve_inversion(
     vs_tmp, thk_tmp, dc_rest = optimizer(inv_model, dispersion_curves, ranges, vp_model, max_depth).run()
 
     error = float(np.mean([get_misfit("mape", obs, rest) for obs, rest in zip(dispersion_curves.velocity_phase, dc_rest)]))
-    save_model(vs_tmp, thk_tmp, dc_rest, dispersion_curves, max_depth, path4save_bins_dir, path4save_image_dir, qc_inversion, error)
+    save_model(vs_tmp, thk_tmp, dc_rest, dispersion_curves, max_depth, ranges, inv_model.inversion_method, path4save_bins_dir, path4save_image_dir, qc_inversion, error)
 
     return error
 
@@ -175,6 +175,8 @@ def save_model(
         dc_rest: list[float],
         disp_curve: "DispersionCurve",
         max_depth: float,
+        ranges: [list, Ranges],
+        method: str,
         path4save_bins_dir: Path,
         path4save_image_dir: Path,
         qc_inversion: bool,
@@ -220,6 +222,8 @@ def save_model(
             velocity_shear,  # Shear wave velocity
             thickness,  # Layer thicknesses
             max_depth,  # Maximum depth for plotting
+            ranges,
+            method,
         )
 
 def prepare_vp_models(inv_model: InversionModel, disp_curves: list[DispersionCurve]) -> list[PWaveVelocityModel]:

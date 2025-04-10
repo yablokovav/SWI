@@ -143,7 +143,7 @@ def getranges(dc: np.ndarray, freq: np.ndarray, xi: float = 2) -> Ranges:
     vs_mean: np.ndarray = calculate_velocity_profile(dc, depth_range, 1.16)  # Calculate average shear wave velocity
 
     # Define velocity limits
-    dvs: np.ndarray = vs_mean * 0.5  # Calculate velocity variation
+    dvs: np.ndarray = vs_mean * 0.8  # Calculate velocity variation
     vs_up: np.ndarray = vs_mean + dvs  # Calculate upper velocity limits
     vs_down: np.ndarray = vs_mean - dvs  # Calculate lower velocity limits
 
