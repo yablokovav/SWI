@@ -1,8 +1,6 @@
 import logging  # Module for logging messages
 from pathlib import Path  # Module for object-oriented filesystem paths
 
-from win32comext.adsi.demos.scp import handlers
-
 from src.config_reader.Checker.PreprocessingChecker import PreprocessingChecker  # Class to check preprocessing section
 from src.config_reader.Checker.SpectralChecker import SpectralChecker  # Class to check 'spectral' section
 from src.config_reader.Checker.InversionChecker import InversionChecker  # Class to check 'inversion' section
