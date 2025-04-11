@@ -43,7 +43,7 @@ for i, indx_inv in enumerate(range(0, len(module_dirs["inversion"]), 2)):
         remove_outliers_smoothing = postprocessing.remove_outliers_smoothing,
         num_xslices_3d = postprocessing.parameters_3d.num_xslices_3d,
         num_yslices_3d = postprocessing.parameters_3d.num_yslices_3d,
-        num_zslices_3d = 3,
+        num_zslices_3d = postprocessing.parameters_3d.num_zslices_3d,
         error_thr=postprocessing.error_thr,
         save_segy = postprocessing.save_segy,
     ).run(

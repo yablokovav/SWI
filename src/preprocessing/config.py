@@ -10,4 +10,5 @@ name_headers = (
     segyio.TraceField.CDP_X,
     segyio.TraceField.CDP_Y,
     segyio.TraceField.offset,
+    segyio.TraceField.CDP
 )

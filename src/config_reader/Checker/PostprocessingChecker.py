@@ -20,7 +20,9 @@ POSTPROCESSING_2D_PARAMETERS = [
 ]
 POSTPROCESSING_3D_PARAMETERS = [
     'num_xslices_3d',
-    'num_yslices_3d'
+    'num_yslices_3d',
+    'num_zslices_3d',
+
 ]
 INTRRP_DIM = [
     '1d',
@@ -347,8 +349,10 @@ class PostprocessingChecker:
         check_parameters_3d = {}
         num_xslices_3d_ind = 0
         num_yslices_3d_ind = 1
+        num_zslices_3d_ind = 2
         key_num_xslices_3d = POSTPROCESSING_3D_PARAMETERS[num_xslices_3d_ind]
         key_num_yslices_3d = POSTPROCESSING_3D_PARAMETERS[num_yslices_3d_ind]
+        key_num_zslices_3d = POSTPROCESSING_3D_PARAMETERS[num_zslices_3d_ind]
 
         existence_list = check_level_correct(
             self.postprocessing_config[level], POSTPROCESSING_3D_PARAMETERS, level
@@ -381,6 +385,18 @@ class PostprocessingChecker:
                 + check_num_yslices_3d.message
             )
             count_mistakes_postprocessing += check_num_yslices_3d.is_error
+
+            check_num_zslices_3d = check_parameter_type_and_value(
+                self.postprocessing_config[level][key_num_zslices_3d],
+                int,
+                [0, None],
+                [True, True]
+            )
+            check_parameters_3d[key_num_zslices_3d] = (
+                str(self.postprocessing_config[level][key_num_zslices_3d])
+                + check_num_zslices_3d.message
+            )
+            count_mistakes_postprocessing += check_num_zslices_3d.is_error
 
         return check_parameters_3d, count_mistakes_postprocessing
 

@@ -23,7 +23,7 @@ PARAMS_PREPROCESSING = [
 ]
 # Define constants for expected 2D preprocessing parameters
 # Define constants for expected 3D preprocessing parameters
-PARAMS_PREPROCESSING_3D = ['sort_3d_order', 'num_sectors', 'bin_size_x', 'bin_size_y']
+PARAMS_PREPROCESSING_3D = ['sort_3d_order', 'num_sectors']
 # Define constants for valid 3D sorting orders
 VALID_SORT_3D_ORDER = ['csp', 'cdp']
 # Define a constant for a "good" or empty string (used when no errors found)
@@ -375,20 +375,14 @@ class PreprocessingChecker:
         The function performs validation checks for the following parameters:
         1. 'sort_3d_order': Checks if the value is a valid string within the acceptable sorting order ('csp' and 'cdp').
         2. 'num_sectors': Checks if the value is an integer greater than or equal to 0.
-        3. 'bin_size_x': Checks if the value is an integer greater than or equal to 0.
-        4. 'bin_size_y': Checks if the value is an integer greater than or equal to 0.
 
         The error count is updated based on the validation results of each parameter.
         """
         sort_3d_order_ind = 0  # Indices for parameters
         num_sectors_ind = 1
-        bin_size_x_ind = 2
-        bin_size_y_ind = 3
 
         key_sort_3d_order = PARAMS_PREPROCESSING_3D[sort_3d_order_ind]  # Keys
         key_num_sector = PARAMS_PREPROCESSING_3D[num_sectors_ind]
-        key_bin_size_x = PARAMS_PREPROCESSING_3D[bin_size_x_ind]
-        key_bin_size_y = PARAMS_PREPROCESSING_3D[bin_size_y_ind]
 
         check_parameters_3d = {}  # Store validation results
 
@@ -429,32 +423,6 @@ class PreprocessingChecker:
                     + check_num_sectors.message
             )
             count_mistakes_preprocessing += check_num_sectors.is_error
-
-            # Validate 'bin_size_x'
-            check_bin_size_x = check_parameter_type_and_value(
-                self.preprocessing_config[level][key_bin_size_x],
-                int,  # Expect int type
-                [0, None],  # Range: >= 0
-                [True, False]  # Inclusive lower bound, exclusive upper (corrected to be consistent)
-            )
-            check_parameters_3d[key_bin_size_x] = (
-                    str(self.preprocessing_config[level][key_bin_size_x])
-                    + check_bin_size_x.message
-            )
-            count_mistakes_preprocessing += check_bin_size_x.is_error
-
-            # Validate 'bin_size_y'
-            check_bin_size_y = check_parameter_type_and_value(
-                self.preprocessing_config[level][key_bin_size_y],
-                int,  # Expect int type
-                [0, None],  # Range: >= 0
-                [False, False]  # Inclusive lower bound, exclusive upper (corrected to be consistent)
-            )
-            check_parameters_3d[key_bin_size_y] = (
-                    str(self.preprocessing_config[level][key_bin_size_y])
-                    + check_bin_size_y.message
-            )
-            count_mistakes_preprocessing += check_bin_size_y.is_error
 
         return check_parameters_3d, count_mistakes_preprocessing
 

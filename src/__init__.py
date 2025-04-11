@@ -10,6 +10,7 @@ HEADER_ELEV_IND = 5
 HEADER_CDP_X_IND = 6
 HEADER_CDP_Y_IND = 7
 HEADER_OFFSET_IND = 8
+HEADER_CDP_IND = 9
 
 COLL_SIZE = 25  # - number of characters for alignment in logging
 WIDTH_FOR_RP = 12  # - number of characters for alignment RP in logging

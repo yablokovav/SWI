@@ -1,10 +1,10 @@
 # import python libraries
 from collections.abc import Generator  # For type hinting generators
 from typing import Optional, Any  # For optional type hints
+
 import numpy as np  # For numerical operations
 from joblib import Parallel, delayed
 from tqdm import tqdm  # For progress bars
-
 # import constants
 from src import *
 
@@ -102,8 +102,6 @@ class SeismicPreprocessorSpectral:
         # 3d parameters
         self.sort_3d_order = preprocessing.parameters_3d.sort_3d_order.value
         self.num_sectors = preprocessing.parameters_3d.num_sectors
-        self.bin_size_x = preprocessing.parameters_3d.bin_size_x
-        self.bin_size_y = preprocessing.parameters_3d.bin_size_y
 
         # Assign configurations for spectral analysis
         self.fk_transform = fk_transform
@@ -230,10 +228,7 @@ class SeismicPreprocessorSpectral:
             file_path,
             name_headers,
             indexes4read=indexes4read,
-            type_data=self.type_data,
-            sort_3d_order=self.sort_3d_order,
             endian=self.endian,
-            bin_size=(self.bin_size_x, self.bin_size_y),
             elevation_scaler=self.scaler_to_elevation,
             coordinates_scaler=self.scaler_to_coordinates,
         )
@@ -359,15 +354,18 @@ class SeismicPreprocessorSpectral:
                                                                               curr_headers,
                                                                               self.offset_min,
                                                                               self.offset_max)
-
-
+            sort_indexes = np.argsort(curr_headers[HEADER_OFFSET_IND])
+            curr_traces, curr_headers = curr_traces[:, sort_indexes], curr_headers[:, sort_indexes]
             if len(curr_headers[HEADER_OFFSET_IND]) < self.num_sectors:  # Reject if less than 10 traces
                 continue
+
+
 
             alpha = utils.transform_to_polar(  # Transform to polar coordinates
                 curr_headers[HEADER_REC_X_IND:HEADER_REC_Y_IND + 1],
                 curr_headers[HEADER_SOU_X_IND:HEADER_SOU_Y_IND + 1]
             )
+
 
             labels = utils.weighted_clustering(  # Cluster receivers into sectors
                 alpha, curr_headers[HEADER_OFFSET_IND], angle_weight=1.0, distance_weight=0.0, n_clusters=self.num_sectors
@@ -451,6 +449,8 @@ class SeismicPreprocessorSpectral:
         log_cdp_y = []  # float List to log
         # Unpack spectral directories from the object
         # Iterate over partitions of seismic data using tqdm for progress bar
+
+
         for curr_traces, curr_headers in utils.data_partition(sorted_traces, sorted_attributes, sort_3d_order=self.sort_3d_order):
 
             # Reject the partition if the number of traces is less than 10
@@ -471,6 +471,9 @@ class SeismicPreprocessorSpectral:
             # Reject the partition if the number of traces is less than 10 after stacking
             if len(curr_headers[HEADER_OFFSET_IND]) < 10:
                 continue
+
+            sorted_indexes = np.argsort(curr_headers[HEADER_OFFSET_IND])
+            curr_traces, curr_headers = curr_traces[:, sorted_indexes], curr_headers[:, sorted_indexes]
 
             valid_modes, snr, curr_headers = utils.apply_spectral_processing(
                     self,
@@ -589,8 +592,7 @@ class SeismicPreprocessorSpectral:
                 ranges=(self.ffid_start, self.ffid_stop, self.ffid_increment),
                 type_data=self.type_data,
                 sort_3d_order=self.sort_3d_order,
-                bin_size=(self.bin_size_x, self.bin_size_y),
-                num_sources_on_cpu=self.num_sources_on_cpu
+                num_sources_on_cpu=self.num_sources_on_cpu,
             )
 
             self.log_data_preprocessing = Parallel(n_jobs=-1)(

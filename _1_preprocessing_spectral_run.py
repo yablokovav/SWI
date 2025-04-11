@@ -9,8 +9,8 @@ from src.config_reader.models import SWIConfigModel
 from src.config_reader.utils import create_directories
 
 root_dir = Path("").resolve()
-# params_dir = root_dir / "configs/real_3d/main.yaml"
-params_dir = root_dir / "configs/synth_2d/main.yaml"
+params_dir = root_dir / "configs/real_3d/main.yaml"
+# params_dir = root_dir / "configs/synth_2d/main.yaml"
 # params_dir = root_dir / "configs/das/main.yaml"
 swi_dir = root_dir / "runs"
 preprocessing, spectral, inversion, postprocessing = ConfigReader.read(params_dir, SWIConfigModel, swi_dir, show=False)

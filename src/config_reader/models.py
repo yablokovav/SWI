@@ -25,8 +25,6 @@ from src.config_reader.enums import (
 class Parameters3DModel(BaseModel):
     sort_3d_order: Sort3dOrder
     num_sectors: int
-    bin_size_x: float
-    bin_size_y: float
 
 
 class PreprocessingModel(BaseModel):
@@ -107,6 +105,7 @@ class Postprocessing2dModel(BaseModel):
 class Postprocessing3dModel(BaseModel):
     num_xslices_3d: int
     num_yslices_3d: int
+    num_zslices_3d: int
 
 
 class PostprocessingModel(BaseModel):

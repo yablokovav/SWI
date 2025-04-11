@@ -5,6 +5,8 @@ import numpy as np
 from  numba import  njit
 from scipy.signal import detrend
 from sklearn.cluster import KMeans
+from spyder.utils.external.lockfile import unique
+
 from src.files_processor.savers import save_segy
 from src.spectral_analysis.utils import spectral_processing
 from src.preprocessing.config import name_headers
@@ -92,24 +94,33 @@ def data_partition(
     start = 0
     if sort_3d_order == "cdp":
         # Use CDP coordinates (CDP_X, CDP_Y) for partitioning
-        keys_for_partition = headers[HEADER_CDP_X_IND:HEADER_CDP_Y_IND + 1].T
+        keys_for_partition = headers[HEADER_CDP_IND]
     else:
         # Use source coordinates (SOU_X, SOU_Y) for partitioning
         keys_for_partition = headers[HEADER_FFID_IND]
-
     # Iterate through the coordinate keys
-    for key in range(length := len(keys_for_partition)):
-        # Check if this is the last trace or if the coordinates change
-        if (key == length - 1) or not np.array_equal(keys_for_partition[key], keys_for_partition[key + 1]):
-            # Extract the seismic traces and headers for the current segment
-            curr_seismogram = traces[:, start: key + 1]
-            curr_headers = headers[:, start: key + 1]
 
-            # Yield the current segment
-            yield curr_seismogram, curr_headers
+    # Old variant of dividing data by keys, may be faster, but need previously sorting data by specified headers
+    # for key in range(length := len(keys_for_partition)):
+    #     # Check if this is the last trace or if the coordinates change
+    #     if (key == length - 1) or keys_for_partition[key] != keys_for_partition[key + 1]:
+    #         # Extract the seismic traces and headers for the current segment
+    #         curr_seismogram = traces[:, start: key + 1]
+    #         curr_headers = headers[:, start: key + 1]
+    #
+    #         # Yield the current segment
+    #         yield curr_seismogram, curr_headers
+    #
+    #         # Update the starting index for the next segment
+    #         start = key + 1
 
-            # Update the starting index for the next segment
-            start = key + 1
+    unique_keys_for_partition = np.unique(keys_for_partition)
+    for key in unique_keys_for_partition:
+        part_indexes = np.where(keys_for_partition == key)[0]
+        curr_seismogram = traces[:, part_indexes]
+        curr_headers = headers[:, part_indexes]
+        yield curr_seismogram, curr_headers
+
 
 
 def _calculate_cmp(primary_key_idx: int, curr_headers: np.ndarray, base: float) -> tuple[np.ndarray, np.ndarray]:
@@ -293,14 +304,14 @@ def apply_spectral_processing(
 
     else:
         if config_parameters.sort_3d_order == 'csp':
-            desired_step = np.mean(np.abs(np.diff(seism_header[HEADER_OFFSET_IND])))
-            seism_traces, seism_header = global_spitz_interpolation(seism_traces, seism_header, desired_step)
 
             spec_name = f"{file_path.stem}.{seism_header[HEADER_FFID_IND][0]}.{num_sector}"
         else:
             spec_name = (f"{file_path.stem}."
-                         f"{seism_header[HEADER_CDP_X_IND][0]}_"
-                         f"{seism_header[HEADER_CDP_Y_IND][0]}")
+                         f"{seism_header[HEADER_CDP_IND][0]}")
+
+        desired_step = np.mean(np.abs(np.diff(seism_header[HEADER_OFFSET_IND])))
+        seism_traces, seism_header = global_spitz_interpolation(seism_traces, seism_header, desired_step)
 
         if config_parameters.qc_preprocessing:
             save_path = config_parameters.save_dir_preprocessing[0] / f"{spec_name}{file_path.suffix}"
