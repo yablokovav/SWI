@@ -33,6 +33,8 @@ class PreprocessingModel(BaseModel):
     ffid_start: int
     ffid_stop: int
     ffid_increment: int
+    scaler_to_elevation: float
+    scaler_to_coordinates: float
     num_sources_on_cpu: int
     path4ffid_file: Optional[Path]
     data_dir: Path

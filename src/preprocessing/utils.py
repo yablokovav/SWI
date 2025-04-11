@@ -95,7 +95,7 @@ def data_partition(
         keys_for_partition = headers[HEADER_CDP_X_IND:HEADER_CDP_Y_IND + 1].T
     else:
         # Use source coordinates (SOU_X, SOU_Y) for partitioning
-        keys_for_partition = headers[HEADER_SOU_X_IND:HEADER_SOU_Y_IND + 1].T
+        keys_for_partition = headers[HEADER_FFID_IND]
 
     # Iterate through the coordinate keys
     for key in range(length := len(keys_for_partition)):

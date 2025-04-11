@@ -233,7 +233,6 @@ def get_indexes4read(header_file_path: Path,
 
 
 def read_segy(
-
     file_path: Path,
     name_headers: tuple,
     indexes4read: list,
@@ -242,6 +241,8 @@ def read_segy(
     type_data = "",
     bin_size: tuple = (),
     need_sort: bool = True,
+    elevation_scaler: float = 0,
+    coordinates_scaler: float = 0,
 ) -> tuple[np.ndarray, np.ndarray, float] :
     """
     Reads SEGY data, extracts traces and headers, and sorts them according
@@ -264,6 +265,8 @@ def read_segy(
                                      sort_3d_order is not "csp"). If used, the bin sizes
                                      must be of float type. Defaults to ().
         need_sort (bool): Whether to sort the data after reading. Defaults to True.
+        elevation_scaler (float): Scaling factor for elevation. Defaults to 0.0.
+        coordinates_scaler (float): Scaling factor for coordinates. Defaults to 0.0.
 
     Returns:
         Tuple[np.ndarray, np.ndarray, float, int]: A tuple containing:
@@ -280,6 +283,13 @@ def read_segy(
         headers = np.array([[segy_file.attributes(key)[idx] for idx in indexes4read] for key in name_headers]).squeeze()
         dt = segyio.dt(segy_file) * MULTIPLIER_FOR_DT
 
+        if elevation_scaler:
+            headers[HEADER_ELEV_IND] = (headers[HEADER_ELEV_IND] *
+                                        (np.abs(elevation_scaler)**(np.sign(elevation_scaler))))
+        if coordinates_scaler:
+            headers[HEADER_SOU_X_IND: HEADER_REC_Y_IND+1] = (headers[HEADER_SOU_X_IND: HEADER_REC_Y_IND+1] *
+                                                             (np.abs(coordinates_scaler)**(np.sign(coordinates_scaler))))
+
         if type_data == "2d":
             ### Case 2D data, the direction along which the profile 2D is directed is determined
             ### Data are sorting like [SourceX, GroupX] or [SourceY, GroupY]
@@ -292,14 +302,14 @@ def read_segy(
 
         elif sort_3d_order == "csp":
             ### Case 3D data, Data are sorting like [SourceX, SourceY]
-            headers[HEADER_SOU_X_IND:HEADER_REC_Y_IND+1] = headers[HEADER_SOU_X_IND:HEADER_REC_Y_IND+1] / 100
+            headers[HEADER_SOU_X_IND:HEADER_REC_Y_IND+1] = headers[HEADER_SOU_X_IND:HEADER_REC_Y_IND+1]
             sorted_indices = np.lexsort([headers[HEADER_OFFSET_IND], headers[HEADER_SOU_Y_IND], headers[HEADER_SOU_X_IND]])
 
         else:
             ## Case 3D data, Data are sorting like [CDP_X, CDP_Y]
             ### Binning CDP_X and writing to headers
-            headers[HEADER_SOU_X_IND:HEADER_REC_Y_IND + 1] = headers[HEADER_SOU_X_IND:HEADER_REC_Y_IND + 1] / 100
-            headers[HEADER_CDP_X_IND:HEADER_CDP_Y_IND + 1] = headers[HEADER_CDP_X_IND:HEADER_CDP_Y_IND + 1] / 100
+            headers[HEADER_SOU_X_IND:HEADER_REC_Y_IND + 1] = headers[HEADER_SOU_X_IND:HEADER_REC_Y_IND + 1]
+            headers[HEADER_CDP_X_IND:HEADER_CDP_Y_IND + 1] = headers[HEADER_CDP_X_IND:HEADER_CDP_Y_IND + 1]
             headers[HEADER_CDP_X_IND] = np.int32(headers[HEADER_CDP_X_IND] / bin_size[0]) * bin_size[0] + bin_size[0]//2
             headers[HEADER_CDP_Y_IND] = np.int32(headers[HEADER_CDP_Y_IND] / bin_size[1]) * bin_size[1] + bin_size[1]//2
             headers[HEADER_OFFSET_IND] = np.sqrt((headers[HEADER_REC_X_IND] - headers[HEADER_CDP_X_IND])**2 +
