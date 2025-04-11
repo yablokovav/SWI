@@ -244,3 +244,68 @@ def initial_guess(y, not_finite):
     z = idct(idct(z, norm='ortho', type=2, axis=1), norm='ortho', type=2, axis=0)
     return z
 
+
+def average_models_in_bin(
+    coordinates: np.ndarray,
+    error: np.ndarray,
+    vel_model: np.ndarray,
+    elevation: np.ndarray,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """
+    Averages velocity models within bins, weighting models based on their error.
+
+    This function identifies unique coordinate locations, and for each location,
+    averages the corresponding velocity models, weighting them linearly inversely proportional to error.
+    NaN values in velocity models are handled gracefully.
+
+    Args:
+        coordinates: (N, 2) array of (x, y) coordinates for each velocity model.
+        error: (N,) array of error values associated with each velocity model.
+        vel_model: (M, N) array of velocity models, where M is the depth dimension and N is the number of models.
+        elevation: (N,) array of elevation values associated with each velocity model.
+
+    Returns:
+        A tuple containing:
+            - unique_coordinates: (K, 2) array of unique (x, y) coordinates.
+            - averaged_velocities: (M, K) array of averaged velocity models for each unique coordinate.
+            - averaged_elevations: (K,) array of averaged elevation values for each unique coordinate.
+    """
+
+    unique_coords, unique_indices, counts = np.unique(
+        coordinates, axis=0, return_index=True, return_counts=True
+    )
+
+    averaged_velocities = []
+    averaged_elevations = []
+
+    for index, count in zip(unique_indices, counts):
+        if count > 1:  # Multiple models in this bin
+            # Sort models by error within the bin
+            indices_in_bin = np.argsort(error[index : index + count])
+            velocities_in_bin = vel_model[:, index + indices_in_bin]
+
+            # Create weights: linear from 1 to 0 based on error rank
+            valid_mask = ~np.isnan(velocities_in_bin[0])  # Mask out NaNs
+            velocities_valid = velocities_in_bin[:, valid_mask]
+            num_valid = valid_mask.sum()
+
+            if num_valid > 0:
+                weights = np.linspace(1, 0, num_valid)
+                # Weighted average, handling NaNs
+                averaged_velocity = np.average(
+                    velocities_valid, weights=weights, axis=1
+                )
+            else:
+                # All models are NaN, use a first model
+                averaged_velocity = vel_model[:, index].copy()
+        else:  # Only one model in this bin
+            averaged_velocity = vel_model[:, index].copy()  # Make a copy to avoid potential modification of the original
+
+        averaged_velocities.append(averaged_velocity)
+        averaged_elevations.append(np.mean(elevation[index : index + count]))
+
+    return (
+        unique_coords,
+        np.array(averaged_velocities).T,
+        np.array(averaged_elevations)/10000,
+    )

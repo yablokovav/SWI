@@ -9,7 +9,7 @@ from joblib import Parallel, delayed
 from scipy.interpolate import griddata, interp1d
 
 from src.config_reader.models import ModelVCR
-from src.postprocessing.utils import define_projection, group_files_by_basename, read_curves, robust_smooth_2d
+from src.postprocessing import utils
 from src.files_processor.savers import save_segy, save_model_to_bin
 
 class VelocityModelVisualizer:
@@ -28,6 +28,7 @@ class VelocityModelVisualizer:
         remove_outliers_smoothing = False,
         num_xslices_3d: int = 5,
         num_yslices_3d: int = 5,
+        num_zslices_3d: int = 5,
         error_thr: float = 0.2,
         save_segy: bool = True,
 
@@ -45,6 +46,7 @@ class VelocityModelVisualizer:
         self.remove_outliers_smoothing = remove_outliers_smoothing
         self.num_xslices_3d = num_xslices_3d
         self.num_yslices_3d = num_yslices_3d
+        self.num_zslices_3d = num_zslices_3d
         self.error_thr = error_thr
         self.save_segy = save_segy
 
@@ -70,7 +72,7 @@ class VelocityModelVisualizer:
         # Remove all files in directories
         [[item.unlink() for item in dir_.glob("*")] for dir_ in [self.dir_save_bin, self.dir_save_segy]]
 
-        files_by_basename = group_files_by_basename(models_dir)
+        files_by_basename = utils.group_files_by_basename(models_dir)
         if not files_by_basename:
             raise ValueError('Interpolation Velocity Models Error: No files with dispersion curves.')
 
@@ -79,7 +81,7 @@ class VelocityModelVisualizer:
             models = [ModelVCR.load(file) for file in files_by_basename[key]]
 
             #Unpacing ModelVCR-dataclass and preparing models, depth, coordinates and relief
-            self.depth, self.velocity, self.coord, self.elevation, self.error = read_curves(models, self.max_depth, self.error_thr)
+            self.depth, self.velocity, self.coord, self.elevation, self.error = utils.read_curves(models, self.max_depth, self.error_thr)
 
             # Sorting read models
             VelocityModelVisualizer.sorting_models(self)
@@ -103,34 +105,11 @@ class VelocityModelVisualizer:
             VelocityModelVisualizer.interp1d_in_depth(self, num_models, num_layers)
             print("Interpolation by depth is done.")
 
-            # Select 1d-models with the minimum error within bins
-            self.coord, indexes, counts = np.unique(self.coord, axis=0, return_index=True, return_counts=True)
-
-            uniq_velocities, uniq_relief = [], []
-            for index, count in zip(indexes, counts):
-                if count > 1:
-                    indx_sort = np.argsort(self.error[index: index + count])
-                    vels_cur = self.output_model[:, index + indx_sort]
-                    mask =  ~np.isnan(vels_cur[0])
-                    count_not_none = sum(mask)
-                    if count_not_none:
-                        vels_avg = np.average(
-                            vels_cur[:, mask],
-                            weights=np.linspace(1, 0, count_not_none),
-                            axis=1
-                        )
-                    else:
-                        vels_avg = np.squeeze(self.output_model[:, index])
-                else:
-                    vels_avg = np.squeeze(self.output_model[:, index: index + count])
-
-                uniq_velocities.append(vels_avg) # Averaging 1d-models within bins
-                uniq_relief.append(np.mean(self.elevation[index: index + count]))
-
-            self.output_model, self.elevation = np.array(uniq_velocities).T, np.array(uniq_relief)
+            # Averages the velocity models that fall in the specified bin cell
+            self.coord, self.output_model, self.elevation = utils.average_models_in_bin(self.coord, self.error, self.output_model, self.elevation)
 
             if  self.data_type == "2d":
-                projection = define_projection(self.coord)
+                projection = utils.define_projection(self.coord)
 
                 if self.interp_dim == "1d":
                     VelocityModelVisualizer.interd1d(self, num_models, num_layers, projection)
@@ -138,7 +117,7 @@ class VelocityModelVisualizer:
                     VelocityModelVisualizer.interd2d(self, num_layers, projection)
 
                 #smoothing model
-                self.output_model = robust_smooth_2d(self.output_model, s=self.smooth_factor, robust=self.remove_outliers_smoothing)
+                self.output_model = utils.robust_smooth_2d(self.output_model, s=self.smooth_factor, robust=self.remove_outliers_smoothing)
 
                 #save binary-file of model
                 save_model_to_bin(self.dir_save_bin / f'{key}', self.output_model, self.x_new, self.y_new, self.z_new, self.elevation, projection)
@@ -153,10 +132,12 @@ class VelocityModelVisualizer:
                 # Save yz-slices from 3d model in binary files for visualization
                 VelocityModelVisualizer.save_model_yz_slices(self, key)
 
+                # Save yz-slices from 3d model in binary files for visualization
+                VelocityModelVisualizer.save_model_xy_slices(self, key)
+
             # save velocity model to segy-file
             if self.save_segy:
                 VelocityModelVisualizer.save_model_to_segy(self, key)
-
 
     def sorting_models(self):
         sort_indexes = np.lexsort([self.coord[:,0], self.coord[:,1]])
@@ -211,7 +192,7 @@ class VelocityModelVisualizer:
 
     def _smooth_slice(self, x_grid, y_grid, output_model):
         vs3d_tmp = griddata((self.coord[:, 0], self.coord[:, 1]), output_model, (x_grid, y_grid))
-        vs3d_tmp = robust_smooth_2d(vs3d_tmp, s=self.smooth_factor, robust=self.remove_outliers_smoothing)
+        vs3d_tmp = utils.robust_smooth_2d(vs3d_tmp, s=self.smooth_factor, robust=self.remove_outliers_smoothing)
         return vs3d_tmp
 
     def interp2d_by_depth_slices(self):
@@ -226,7 +207,7 @@ class VelocityModelVisualizer:
         print("Slise interpolation is done")
         # interpolation relief
         self.elevation = griddata((self.coord[:, 0], self.coord[:, 1]), self.elevation, (x_grid, y_grid))
-        self.elevation = robust_smooth_2d(self.elevation, s=self.smooth_factor,
+        self.elevation = utils.robust_smooth_2d(self.elevation, s=self.smooth_factor,
                                              robust=self.remove_outliers_smoothing)
 
         # prepair for segy writing
@@ -255,9 +236,7 @@ class VelocityModelVisualizer:
         x, y, z = self.x_new[indx_sort], self.y_new[indx_sort], self.z_new
         elevation, model = self.elevation[indx_sort],  self.output_model[:, indx_sort]
         uniq, indexes, counts = np.unique(y, return_index=True, return_counts=True)
-
         selected_ind_uniq = np.int32(np.linspace(0, len(uniq), self.num_yslices_3d+2))[1:-1]
-
 
         uniq, indexes, counts = uniq[selected_ind_uniq], indexes[selected_ind_uniq], counts[selected_ind_uniq]
         for i, (index, count) in enumerate(zip(indexes, counts)):
@@ -265,9 +244,15 @@ class VelocityModelVisualizer:
             save_model_to_bin(self.dir_save_bin / f'{key}_xz_{uniq[i]}', model[:, indx_slices],
                                          x[indx_slices],  y[indx_slices], z, elevation[indx_slices],"xz")
 
+    def save_model_xy_slices(self, key):
+        vs3d = self.output_model.reshape((self.size_z, self.size_y, self.size_x))
+        x = np.arange(min(self.coord[:, 0]), max(self.coord[:, 0]), self.dx)
+        y = np.arange(min(self.coord[:, 1]), max(self.coord[:, 1]), self.dy)
 
-
-
+        selected_ind = np.int32(np.linspace(0, len(self.z_new), self.num_zslices_3d+2))[1:-1]
+        for index in selected_ind:
+            save_model_to_bin(self.dir_save_bin / f'{key}_xy_{self.z_new[index]}',  vs3d[index, :, :],
+                                         x, y, self.z_new, self.elevation,"xy")
 
     def save_model_to_segy(self, key):
         save_segy(

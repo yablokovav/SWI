@@ -4,6 +4,7 @@ from pathlib import Path
 
 import numpy as np
 import plotly.graph_objects as go
+from matplotlib import pyplot as plt
 from screeninfo import get_monitors
 from src.files_processor.readers import get_filenames
 
@@ -61,9 +62,8 @@ class Model2DPlotter:
         if slice_plane != "xy":
             matrix, vec_2 = Model2DPlotter.add_relief(matrix, vec_2, relief)
 
-        matrix, vec_1, vec_2, relief = Model2DPlotter.reduce_matrix(matrix, vec_1, vec_2, relief, 400, 200)
-        # if (np.min(vec_2) >= 0) and (not len(relief)):
-        #     vec_2 *= -1
+        matrix, vec_1, vec_2, relief = Model2DPlotter.reduce_matrix(matrix, vec_1, vec_2, relief, 400, 400)
+
         fig = go.Figure(
             data=go.Contour(
                 x=vec_1,

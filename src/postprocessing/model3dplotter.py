@@ -54,8 +54,7 @@ class Model3DPlotter:
             matrix, vec_3 = Model3DPlotter.add_relief(matrix, vec_3, relief)
             x, z = np.meshgrid(vec_1, vec_3)
             return go.Surface(x=x, y=vec_2, z=z, surfacecolor=matrix[::k1, ::k3].T, coloraxis='coloraxis',
-                              showscale=False, opacity=0.95, name=slice_name, hoverlabel=dict(namelength=50))
-
+                              showscale=False, opacity=0.95, name=slice_name, hoverlabel=dict(namelength=100))
 
         elif slice_plane == 'yz':
             matrix, vec_3 = Model3DPlotter.add_relief(matrix, vec_3, relief)
@@ -64,9 +63,11 @@ class Model3DPlotter:
                               showscale=False, opacity=0.95, name=slice_name, hoverlabel=dict(namelength=50))
 
         elif slice_plane == 'xy':
-            x, y = np.meshgrid(vec_1, vec_2)
-            return go.Surface(x=x, y=y, z=vec_3, surfacecolor=matrix[::k1, ::k2].T, coloraxis='coloraxis',
-                              showscale=False, opacity=0.95, name=slice_name, hoverlabel=dict(namelength=50))
+            # x, y = np.meshgrid(vec_1, vec_2)
+            # return go.Surface(x=x, y=y, z=vec_3, surfacecolor=matrix[::k1, ::k2].T, coloraxis='coloraxis',
+            #                   showscale=False, opacity=0.95, name=slice_name, hoverlabel=dict(namelength=50))
+            return None
+
     @staticmethod
     def _set_coloraxis(model_vmin, model_vmax) -> dict:
         samples = np.linspace(0.0, 1, 256)
@@ -113,7 +114,8 @@ class Model3DPlotter:
                 slice_name = file.stem,
                 relief = res["elevation"]
                 )
-            slices.append(slice)
+            if slice is not None:
+                slices.append(slice)
 
 
         min_x, max_x, min_y, max_y, min_z, max_z = Model3DPlotter._get_axis_limits(slices)
