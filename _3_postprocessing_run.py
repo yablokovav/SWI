@@ -28,11 +28,12 @@ error = Message(is_error=False, is_warning=False, message="")
 
 
 for i, indx_inv in enumerate(range(0, len(module_dirs["inversion"]), 2)):
-    dir_save_bin, dir_save_image, dir_save_segy = module_dirs["postprocessing"][i * 3: (i + 1) * 3]
+    dir_save_bin, dir_save_image, dir_save_segy, dir_save_fdm = module_dirs["postprocessing"][i * 4: (i + 1) * 4]
 
     VelocityModelVisualizer(
         dir_save_bin,
         dir_save_segy,
+        dir_save_fdm,
         preprocessing.type_data.value,
         dx = postprocessing.d_x,
         dy = postprocessing.d_y,

@@ -352,3 +352,104 @@ def save_max_deviation_hist(max_deviation: list[float], file_path_name: Path, hi
     plt.xticks(bins)
     plt.savefig(file_path_name)
     plt.close()
+
+def write_fdm(filename: str, velocity_model: np.ndarray,
+              x_size: int, y_size: int, z_size: int,
+              x_step: float, y_step: float, z_step: float,
+              dist_unit: int, angle_unit: int,
+              north_angle: float, rot_angle: float,
+              utm_x_int: int, utm_x_frac: float,
+              utm_y_int: int, utm_y_frac: float):
+    """
+    Writes a 3D velocity model to an FDM file.
+
+    Args:
+        filename: The name of the FDM file to create.
+        velocity_model: A 3D NumPy array (x_size, y_size, z_size) representing the velocity model (float32).
+                       The data should be sorted by crosslines (X), inlines (Y), and depth (Z).
+        x_size: Number of grid cells in the X (crossline) direction.
+        y_size: Number of grid cells in the Y (inline) direction.
+        z_size: Number of grid cells in the Z (depth) direction.
+        x_step: Grid cell size in the X direction.
+        y_step: Grid cell size in the Y direction.
+        z_step: Grid cell size in the Z direction.
+        dist_unit: Distance unit (typically 1 or 2). Must be an integer.
+        angle_unit: Angle unit (typically 1 or 2). Must be an integer.
+        north_angle: North angle (not described, set to pi).
+        rot_angle: Rotation angle of the coordinate system (UTM).
+        utm_x_int: Integer part of the UTM X coordinate of the (1, 1) bin center.
+        utm_x_frac: Fractional part of the UTM X coordinate of the (1, 1) bin center.
+        utm_y_int: Integer part of the UTM Y coordinate of the UTM Y coordinate of the (1, 1) bin center.
+        utm_y_frac: Fractional part of the UTM Y coordinate of the (1, 1) bin center.
+
+    Raises:
+        ValueError: If the velocity model dimensions do not match the specified sizes,
+                    or if dist_unit or angle_unit are not integers.
+    """
+
+    if velocity_model.shape != (x_size, y_size, z_size):
+        raise ValueError("Velocity model dimensions do not match specified sizes.")
+
+    if not isinstance(dist_unit, int):
+        raise ValueError("dist_unit must be an integer.")
+
+    if not isinstance(angle_unit, int):
+        raise ValueError("angle_unit must be an integer.")
+
+    header = np.zeros(128, dtype=np.float32)
+
+    # Populate header values based on the FDM format description
+    header[0] = 0.0        # Xor1 (coordinate of bin (1,1))
+    header[1] = x_size     # Xsize (number of bins in X)
+    header[2] = x_step     # Xstep (size of bin in X)
+    header[3] = 0.0        # Yor1 (coordinate of bin (1,1))
+    header[4] = y_size     # Ysize (number of bins in Y)
+    header[5] = y_step     # Ystep (size of bin in Y)
+    header[6] = 0.0        # Zor1 (initial depth)
+    header[7] = z_size     # Zsize (number of bins in Z)
+    header[8] = z_step     # Zstep
+    header[10] = 1.0       # Cfst (minimum crossline number)
+    header[11] = 1.0       # Sfst (minimum inline number)
+    header[12] = 1.0       # Cinc (crossline increment)
+    header[13] = 1.0       # Sinc (inline increment)
+    header[14] = float(dist_unit) # DistUnit
+    header[15] = float(angle_unit) # AngleUnit
+    header[16] = north_angle       # NorthAngle
+    header[17] = rot_angle  # RotAngle
+
+    # Write the data to the binary file
+    with open(filename, 'wb') as f:
+        # Write header
+        header.astype(np.float32).tofile(f)
+
+        # Write UTM coordinates
+        utm_x_int_bytes = np.int32(utm_x_int).tobytes()
+        utm_x_frac_bytes = np.float32(utm_x_frac).tobytes()
+        utm_y_int_bytes = np.int32(utm_y_int).tobytes()
+        utm_y_frac_bytes = np.float32(utm_y_frac).tobytes()
+
+
+        f.write(utm_x_int_bytes)
+        f.write(utm_x_frac_bytes)
+        f.write(utm_y_int_bytes)
+        f.write(utm_y_frac_bytes)
+
+
+
+        # # Calculate the current position in the file (after writing header and UTM coords)
+        # current_position = f.tell()
+        # print(current_position)
+        # # Calculate the padding size needed to reach 512 bytes
+        # padding_size = 512 - current_position
+        #
+        # # Check if padding size is negative (this should never happen, but it's good to be safe)
+        # if padding_size < 0:
+        #     raise ValueError(f"Calculated padding size is negative: {padding_size}.  This indicates an error in header size calculation.")
+        #
+        #
+        # # Pad the rest of the header with zeros to reach 512 bytes
+        # if padding_size > 0: # Check if we need padding
+        #      f.write(np.zeros(padding_size, dtype=np.uint8).tobytes())
+
+        # Write the velocity model data
+        velocity_model.astype(np.float32).tofile(f)

@@ -31,7 +31,7 @@ def create_directories(preprocessing, spectral, inversion, swi_dir) -> dict[str,
         (
             f"{type_data}/postprocessing",
             [f"{sl}/{spectral.spectral_method.value}/{inversion.inversion_method.value}/{subdir}" for
-             sl in save_layout for subdir in ["models2d_bin", "image", "segy"]],
+             sl in save_layout for subdir in ["models2d_bin", "image", "segy", "fdm"]],
         ),
     ]
 

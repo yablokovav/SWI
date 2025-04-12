@@ -10,13 +10,14 @@ from scipy.interpolate import griddata, interp1d
 
 from src.config_reader.models import ModelVCR
 from src.postprocessing import utils
-from src.files_processor.savers import save_segy, save_model_to_bin
+from src.files_processor.savers import save_segy, save_model_to_bin, write_fdm
 
 class VelocityModelVisualizer:
     def __init__(
         self,
         dir_save_bin: Path,
         dir_save_segy: Path,
+        dir_save_fdm: Path,
         data_type: str,
         dx: int,
         dy: int,
@@ -35,6 +36,7 @@ class VelocityModelVisualizer:
     ) -> None:
         self.dir_save_bin = dir_save_bin
         self.dir_save_segy = dir_save_segy
+        self.dir_save_fdm = dir_save_fdm
         self.dx = dx
         self.dy = dy
         self.dz = dz
@@ -138,6 +140,8 @@ class VelocityModelVisualizer:
             # save velocity model to segy-file
             if self.save_segy:
                 VelocityModelVisualizer.save_model_to_segy(self, key)
+                VelocityModelVisualizer.save_model_to_fdm(self, key)
+
 
     def sorting_models(self):
         sort_indexes = np.lexsort([self.coord[:,0], self.coord[:,1]])
@@ -199,7 +203,7 @@ class VelocityModelVisualizer:
         # interpolation on regular grid by every depth slice
         x_grid, y_grid = np.meshgrid(self.x_new, self.y_new)  # new grid coordinates
 
-        vs3d_tr = Parallel(n_jobs=8)(
+        vs3d_tr = Parallel(n_jobs=-1)(
             delayed(self._smooth_slice)(x_grid, y_grid, self.output_model[i_depth, :])
             for i_depth in tqdm(range(self.size_z))
         )
@@ -260,4 +264,25 @@ class VelocityModelVisualizer:
             self.output_model, np.vstack((self.x_new, self.y_new, self.elevation)),
             (TraceField.CDP_X, TraceField.CDP_Y, TraceField.ReceiverGroupElevation),
             self.dz / 1000
+        )
+
+    def save_model_to_fdm(self, key):
+        velocity_model = self.output_model.reshape((self.size_x, self.size_y, self.size_z))
+        write_fdm(
+            self.dir_save_fdm / f'{key}.fdm',
+            velocity_model,
+            self.size_x,
+            self.size_y,
+            self.size_z,
+            self.dx,
+            self.dy,
+            self.dz,
+            1,
+            2,
+            np.pi,
+            0,
+            np.int32(self.x_new),
+            self.x_new - np.int32(self.x_new),
+            np.int32(self.y_new),
+            self.y_new - np.int32(self.y_new),
         )
