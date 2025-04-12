@@ -1,4 +1,5 @@
 import numpy as np
+from numpy import ndarray
 
 from src.config_reader.enums import GetNumLayers
 from src.config_reader.models import Ranges, DispersionCurve, GlobalSearchModel
@@ -7,39 +8,43 @@ from typing import Tuple, List
 from src.files_processor.readers import load_ranges_from_file
 from src.inversion.utils import mean_curve, cluster_dispersion_curves
 
+VR2VS = 1.1 # The ratio of Rayleigh wave velocity (Vr) to shear wave velocity (Vs).
+LAMBDA2DEPTH = 0.4 # A scaling factor for converting wavelength to depth.
 
-def calculate_depth_limits(dc: np.ndarray, freq: np.ndarray, xi: float, lmin: float) -> Tuple[np.ndarray, np.ndarray]:
+def calculate_depth_limits(lambda_: np.ndarray, xi: float) -> Tuple[np.ndarray, np.ndarray]:
     """
-    Calculates minimum and maximum depth limits for spectral analysis layers.
+     Calculates the minimum and maximum depth limits for a series of layers based on wavelength and a scaling factor.
 
-    This function iteratively determines a set of depth ranges (d_min, d_max) based on the dispersion
-    curve (dc), frequencies (freq), a scaling factor (xi), and a minimum wavelength (lmin).
-    The depth ranges are calculated until the maximum depth (d_temp) exceeds a resolution depth (d_res).
+     This function iteratively determines depth limits for each layer, ensuring that the maximum depth
+     does not exceed a resolution depth calculated from the input wavelength array.
 
-    Args:
-        dc (np.ndarray): Dispersion curve values (e.g., phase or group velocities).
-        freq (np.ndarray): Corresponding frequencies for the dispersion curve.
-        xi (float): Scaling factor that controls the growth of depth intervals.
-        lmin (float): Minimum wavelength considered in the analysis.
+     Args:
+         lambda_: A NumPy array of wavelengths. The minimum wavelength is used as a base for the first layer,
+                  and the range of wavelengths is used to calculate the resolution depth.
+         xi: A scaling factor that determines the thickness of each layer relative to the previous layer's thickness
+             or the minimum wavelength.
 
-    Returns:
-        Tuple[np.ndarray, np.ndarray]: A tuple containing two NumPy arrays:
-            - d_min (np.ndarray): Array of minimum depth values for each layer.
-            - d_max (np.ndarray): Array of maximum depth values for each layer.
-    """
+     Returns:
+         A tuple containing two NumPy arrays:
+             - d_min: A NumPy array of minimum depth values for each layer, rounded to one decimal place.
+             - d_max: A NumPy array of maximum depth values for each layer, rounded to one decimal place.
+                    Returns empty arrays if no layer exceeds d_res
+     """
     d_min: List[float] = []  # Initialize list for minimum depth values
     d_max: List[float] = []  # Initialize list for maximum depth values
     d_temp: float = 0  # Initialize temporary depth variable
     i: int = 0  # Initialize iteration counter
-    d_res: float = np.max(dc / freq) / 2  # Calculate resolution depth
+    lambda_min: float = np.min(lambda_)
+    d_res: float = np.max(lambda_) / 2  # Calculate resolution depth
+
 
     while d_temp < d_res:  # Iterate until maximum depth exceeds resolution depth
         if i == 0:  # First layer
-            d_min.append(lmin / 3)  # Set minimum depth for first layer
-            d_max.append(lmin)  # Set maximum depth for first layer
+            d_min.append(lambda_min / 3)  # Set minimum depth for first layer
+            d_max.append(lambda_min)  # Set maximum depth for first layer
         elif i == 1:  # Second layer
             d_min.append(d_max[i - 1])  # Set minimum depth based on previous layer's maximum depth
-            d_max.append(d_min[i] + xi * lmin)  # Set maximum depth based on minimum depth and scaling factor
+            d_max.append(d_min[i] + xi * lambda_min)  # Set maximum depth based on minimum depth and scaling factor
         else:  # Subsequent layers
             d_min.append(d_max[i - 1])  # Set minimum depth based on previous layer's maximum depth
             d_max.append(d_min[i] + xi * (d_max[i - 1] - d_min[i - 1]))  # Set maximum depth based on scaling factor and previous layer's thickness
@@ -54,26 +59,30 @@ def calculate_depth_limits(dc: np.ndarray, freq: np.ndarray, xi: float, lmin: fl
 
     return np.round(np.array(d_min), 1), np.round(np.array(d_max), 1)  # Convert lists to NumPy arrays, round to 1 decimal place, and return
 
-def calculate_velocity_profile(dc: np.ndarray, depth_range: np.ndarray, vr2vs: float) -> np.ndarray:
+def calculate_velocity_profile(dc: np.ndarray, lambda_: ndarray, depth_range: np.ndarray, vr2vs: float, lambda2depth: float) -> np.ndarray:
     """
-    Calculates average shear wave velocities for a given depth range.
+    Calculates a shear wave velocity profile based on dispersion curve, wavelength, depth range,
+    Vr/Vs ratio, and a scaling factor for converting wavelength to depth.
 
-    This function calculates the average shear wave velocity (Vs) for each layer defined by the
-    provided depth range, using the dispersion curve (dc) and a conversion factor (vr2vs).
+    This function estimates shear wave velocities at different depths by finding the closest
+    dispersion curve value corresponding to the mean depth of each layer. It also appends
+    a shear wave velocity value for the half-space (at depth 0).
 
     Args:
-        dc (np.ndarray): Dispersion curve values (e.g., phase or group velocities).
-        depth_range (np.ndarray): A 2D array where each column represents the minimum and maximum
-                                  depth for a layer. Shape: (2, number of layers).
-        vr2vs (float): Conversion factor to convert Rayleigh wave velocity (Vr) to shear wave velocity (Vs).
+        dc: A 1D NumPy array representing the dispersion curve (phase velocity vs. wavelength).
+        lambda_: A 1D NumPy array of wavelengths corresponding to the dispersion curve.
+        depth_range: A 2D NumPy array (N, 2) where each row represents the minimum and maximum
+                     depth of a layer.
+        vr2vs: The ratio of Rayleigh wave velocity (Vr) to shear wave velocity (Vs).
+        lambda2depth: A scaling factor for converting wavelength to depth.
 
     Returns:
-        np.ndarray: A NumPy array containing the calculated average shear wave velocities for each layer,
-                    plus an additional element representing the shear wave velocity at the surface.
+        A 1D NumPy array representing the calculated shear wave velocity profile.  The last element
+        is the shear wave velocity at the half-space (depth 0).
     """
-    lc = (dc / np.mean(depth_range[0])) * 0.53  # Изменено для более явного использования freq
-    vs_mean = [vr2vs * dc[np.argmin(np.abs(lc - dep_mean))] for dep_mean in np.mean(depth_range, axis=0)]
-    vs_mean.append(vr2vs * dc[0]) # Add shear wave velocity at the surface
+    depth_approx = lambda_ * lambda2depth
+    vs_mean = [vr2vs * dc[np.argmin(np.abs(depth_approx - dep_mean))] for dep_mean in np.mean(depth_range, axis=0)]
+    vs_mean.append(vr2vs * dc[0]) # Add shear wave velocity at the half-space
     return np.array(vs_mean) # Return the velocities
 
 
@@ -126,24 +135,22 @@ def getranges(dc: np.ndarray, freq: np.ndarray, xi: float = 2) -> Ranges:
     """
     dc = np.squeeze(dc) # Remove single-dimensional entries from the shape of dc
     freq = np.squeeze(freq) # Remove single-dimensional entries from the shape of freq
-
-    lc = dc / freq # Calculate wavelength
-    lmin = np.min(lc) # Find minimum wavelength
+    lambda_ = dc / freq # Calculate wavelength
 
     # Get depth limits
-    d_min, d_max = calculate_depth_limits(dc, freq, xi, lmin)
+    d_min, d_max = calculate_depth_limits(lambda_, xi)
     depth_range = np.vstack((d_min, d_max)) # Combine d_min and d_max into a 2D array
 
     # Calculate thicknesses
     thk_up: np.ndarray = d_max - d_min  # Calculate upper limit of thicknesses
     thk_up[0] = d_max[0]  # Set first layer thickness to d_max[0]
-    thk_down: np.ndarray = np.full(len(thk_up), np.round(lmin / 3, 1))  # Set lower limit of thicknesses
+    thk_down: np.ndarray = np.full(len(thk_up), np.round(np.min(lambda_) / 3, 1))  # Set lower limit of thicknesses
 
-    # Calculate mean velocity
-    vs_mean: np.ndarray = calculate_velocity_profile(dc, depth_range, 1.16)  # Calculate average shear wave velocity
+    # Calculate average shear wave velocity
+    vs_mean: np.ndarray = calculate_velocity_profile(dc, lambda_, depth_range, VR2VS, LAMBDA2DEPTH)
 
     # Define velocity limits
-    dvs: np.ndarray = vs_mean * 0.8  # Calculate velocity variation
+    dvs: np.ndarray = vs_mean * 0.5  # Calculate velocity variation (50% from mean Vs)
     vs_up: np.ndarray = vs_mean + dvs  # Calculate upper velocity limits
     vs_down: np.ndarray = vs_mean - dvs  # Calculate lower velocity limits
 

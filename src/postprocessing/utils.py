@@ -307,5 +307,5 @@ def average_models_in_bin(
     return (
         unique_coords,
         np.array(averaged_velocities).T,
-        np.array(averaged_elevations)/10000,
+        np.array(averaged_elevations),
     )

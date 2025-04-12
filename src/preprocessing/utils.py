@@ -5,7 +5,6 @@ import numpy as np
 from  numba import  njit
 from scipy.signal import detrend
 from sklearn.cluster import KMeans
-from spyder.utils.external.lockfile import unique
 
 from src.files_processor.savers import save_segy
 from src.spectral_analysis.utils import spectral_processing
