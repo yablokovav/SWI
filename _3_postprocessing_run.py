@@ -47,6 +47,7 @@ for i, indx_inv in enumerate(range(0, len(module_dirs["inversion"]), 2)):
         num_zslices_3d = postprocessing.parameters_3d.num_zslices_3d,
         error_thr=postprocessing.error_thr,
         save_segy = postprocessing.save_segy,
+        save_fdm = postprocessing.save_fdm,
     ).run(
         module_dirs["inversion"][indx_inv]
     )

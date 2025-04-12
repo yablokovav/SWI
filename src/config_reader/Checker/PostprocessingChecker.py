@@ -11,6 +11,7 @@ POSTPROCESSING_PARAMETERS = [
     'vmin_in_model',
     'vmax_in_model',
     'save_segy',
+    'save_fdm',
     'error_thr',
     'parameters_2d',
     'parameters_3d'
@@ -266,6 +267,26 @@ class PostprocessingChecker:
         result = str(self.postprocessing_config[key]) + check_save_segy.message
         return result, count_mistakes_postprocessing + check_save_segy.is_error
 
+    def __check_save_fdm(self, count_mistakes_postprocessing: int, key: str) -> tuple[str, int]:
+        """
+        Validates the 'save_fdm' parameter.
+
+        Check if value is bool.
+
+        Args:
+            count_mistakes_postprocessing (int): Current error count.
+            key (str): The key for the 'save_fdm' parameter.
+
+        Returns:
+            tuple: Validation result (str) and updated error count (int).
+        """
+        check_save_fdm = check_datatype(
+            self.postprocessing_config[key],
+            bool
+        )
+        result = str(self.postprocessing_config[key]) + check_save_fdm.message
+        return result, count_mistakes_postprocessing + check_save_fdm.is_error
+
     def __check_error_thr(self, count_mistakes_postprocessing: int, key: str):
         """
         Validates the 'error_thr' parameter.
@@ -467,6 +488,12 @@ class PostprocessingChecker:
              count_mistakes_postprocessing) = self.__check_save_segy(
                 count_mistakes_postprocessing,
                 'save_segy'
+            )
+
+            (postprocessing_errors['save_fdm'],
+             count_mistakes_postprocessing) = self.__check_save_fdm(
+                count_mistakes_postprocessing,
+                'save_fdm'
             )
 
             (postprocessing_errors['error_thr'],

@@ -118,6 +118,7 @@ class PostprocessingModel(BaseModel):
     vmin_in_model: float
     vmax_in_model: float
     save_segy: bool
+    save_fdm: bool
     error_thr: float
     parameters_2d: Optional[Postprocessing2dModel]
     parameters_3d: Optional[Postprocessing3dModel]

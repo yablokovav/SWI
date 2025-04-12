@@ -1,8 +1,6 @@
 from pathlib import Path
 from typing import Optional
 import numpy as np
-from matplotlib import pyplot as plt
-from pandas.core.common import count_not_none
 from tqdm import tqdm
 from segyio import TraceField
 from joblib import Parallel, delayed
@@ -32,6 +30,7 @@ class VelocityModelVisualizer:
         num_zslices_3d: int = 5,
         error_thr: float = 0.2,
         save_segy: bool = True,
+        save_fdm: bool = True,
 
     ) -> None:
         self.dir_save_bin = dir_save_bin
@@ -51,6 +50,7 @@ class VelocityModelVisualizer:
         self.num_zslices_3d = num_zslices_3d
         self.error_thr = error_thr
         self.save_segy = save_segy
+        self.save_fdm = save_fdm
 
         self.models: Optional[list[np.ndarray]] = None
         self.size_x: Optional[int] = None
@@ -72,7 +72,7 @@ class VelocityModelVisualizer:
     def run(self, models_dir) -> None:
 
         # Remove all files in directories
-        [[item.unlink() for item in dir_.glob("*")] for dir_ in [self.dir_save_bin, self.dir_save_segy]]
+        [[item.unlink() for item in dir_.glob("*")] for dir_ in [self.dir_save_bin, self.dir_save_segy, self.dir_save_fdm]]
 
         files_by_basename = utils.group_files_by_basename(models_dir)
         if not files_by_basename:
@@ -140,6 +140,8 @@ class VelocityModelVisualizer:
             # save velocity model to segy-file
             if self.save_segy:
                 VelocityModelVisualizer.save_model_to_segy(self, key)
+
+            if self.save_fdm:
                 VelocityModelVisualizer.save_model_to_fdm(self, key)
 
 
