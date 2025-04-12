@@ -1,3 +1,4 @@
+import struct
 from pathlib import Path
 import segyio
 import numpy as np
@@ -353,103 +354,102 @@ def save_max_deviation_hist(max_deviation: list[float], file_path_name: Path, hi
     plt.savefig(file_path_name)
     plt.close()
 
-def write_fdm(filename: str, velocity_model: np.ndarray,
-              x_size: int, y_size: int, z_size: int,
-              x_step: float, y_step: float, z_step: float,
-              dist_unit: int, angle_unit: int,
-              north_angle: float, rot_angle: float,
-              utm_x_int: int, utm_x_frac: float,
-              utm_y_int: int, utm_y_frac: float):
-    """
-    Writes a 3D velocity model to an FDM file.
+
+def write_fdm(filename: str, velocity_model: np.ndarray, x_size: int, y_size: int, z_size: int,
+              x_step: float, y_step: float, z_step: float, cfst: float = 1.0, sfst: float = 1.0,
+              cinc: float = 1.0, sinc: float = 1.0, dist_unit: float = 1.0, angle_unit: float = 2.0,
+              north_angle: float = 0.0, rot_angle: float = 0.0, utm_x: float = 0, utm_y: float = 0) -> None:
+    """Writes a 3D velocity model to an FDM format file according to seismic processing specifications.
+
+    The FDM file format consists of a 512-byte header (128 float32 values) followed by a 3D array
+    of float32 values ordered by crosslines (X), inlines (Y), and depths/time (Z), with depth
+    varying most rapidly.
 
     Args:
-        filename: The name of the FDM file to create.
-        velocity_model: A 3D NumPy array (x_size, y_size, z_size) representing the velocity model (float32).
-                       The data should be sorted by crosslines (X), inlines (Y), and depth (Z).
-        x_size: Number of grid cells in the X (crossline) direction.
-        y_size: Number of grid cells in the Y (inline) direction.
-        z_size: Number of grid cells in the Z (depth) direction.
-        x_step: Grid cell size in the X direction.
-        y_step: Grid cell size in the Y direction.
-        z_step: Grid cell size in the Z direction.
-        dist_unit: Distance unit (typically 1 or 2). Must be an integer.
-        angle_unit: Angle unit (typically 1 or 2). Must be an integer.
-        north_angle: North angle (not described, set to pi).
-        rot_angle: Rotation angle of the coordinate system (UTM).
-        utm_x_int: Integer part of the UTM X coordinate of the (1, 1) bin center.
-        utm_x_frac: Fractional part of the UTM X coordinate of the (1, 1) bin center.
-        utm_y_int: Integer part of the UTM Y coordinate of the UTM Y coordinate of the (1, 1) bin center.
-        utm_y_frac: Fractional part of the UTM Y coordinate of the (1, 1) bin center.
+        filename: Output file path for the FDM file
+        velocity_model: 3D numpy array (z, y, x) containing velocity values in meters/second
+        x_size: Number of bins along crossline (X) dimension
+        y_size: Number of bins along inline (Y) dimension
+        z_size: Number of bins along depth/time (Z) dimension
+        x_step: Bin size in meters along X dimension (must be positive)
+        y_step: Bin size in meters along Y dimension (must be positive)
+        z_step: Bin size in meters along Z dimension (must be positive)
+        cfst: First crossline number (typically starts at 1.0)
+        sfst: First inline number (typically starts at 1.0)
+        cinc: Crossline number increment (typically 1.0)
+        sinc: Inline number increment (typically 1.0)
+        dist_unit: Distance units indicator (1=meters, 2=feet, etc.)
+        angle_unit: Angle units indicator (1=degrees, 2=radians, etc.)
+        north_angle: Unused parameter (assume equal PI=3.141592...)
+        rot_angle: Coordinate system rotation angle in radians
+        utm_x: UTM X coordinate (easting) of bin (1,1) center
+        utm_y: UTM Y coordinate (northing) of bin (1,1) center
 
     Raises:
-        ValueError: If the velocity model dimensions do not match the specified sizes,
-                    or if dist_unit or angle_unit are not integers.
+        AssertionError: If velocity_model dimensions don't match specified x/y/z sizes
+
+    Notes:
+        - The coordinate system is assumed to be local (already rotated and translated)
+        - All header fields are written as 32-bit floats unless otherwise noted
+        - UTM coordinates are stored as integer + fractional parts at byte offset 96
+        - The 3D array is written in Z,Y,X order with depth varying fastest
     """
+    # Validate input dimensions
+    assert velocity_model.shape == (z_size, y_size, x_size), (
+        f"Velocity model shape {velocity_model.shape} doesn't match "
+        f"specified dimensions (z={z_size}, y={y_size}, x={x_size})"
+    )
 
-    if velocity_model.shape != (x_size, y_size, z_size):
-        raise ValueError("Velocity model dimensions do not match specified sizes.")
-
-    if not isinstance(dist_unit, int):
-        raise ValueError("dist_unit must be an integer.")
-
-    if not isinstance(angle_unit, int):
-        raise ValueError("angle_unit must be an integer.")
-
+    # Initialize header with 128 float32 values (512 bytes total)
     header = np.zeros(128, dtype=np.float32)
 
-    # Populate header values based on the FDM format description
-    header[0] = 0.0        # Xor1 (coordinate of bin (1,1))
-    header[1] = x_size     # Xsize (number of bins in X)
-    header[2] = x_step     # Xstep (size of bin in X)
-    header[3] = 0.0        # Yor1 (coordinate of bin (1,1))
-    header[4] = y_size     # Ysize (number of bins in Y)
-    header[5] = y_step     # Ystep (size of bin in Y)
-    header[6] = 0.0        # Zor1 (initial depth)
-    header[7] = z_size     # Zsize (number of bins in Z)
-    header[8] = z_step     # Zstep
-    header[10] = 1.0       # Cfst (minimum crossline number)
-    header[11] = 1.0       # Sfst (minimum inline number)
-    header[12] = 1.0       # Cinc (crossline increment)
-    header[13] = 1.0       # Sinc (inline increment)
-    header[14] = float(dist_unit) # DistUnit
-    header[15] = float(angle_unit) # AngleUnit
-    header[16] = north_angle       # NorthAngle
-    header[17] = rot_angle  # RotAngle
+    # Populate mandatory header fields
+    # Byte offsets are calculated as index * 4 (since float32 = 4 bytes)
+    header[0] = 0.0  # Xor1: X coordinate of bin (1,1) (typically 0)
+    header[1] = x_size  # Xsize: Number of crossline bins
+    header[2] = x_step  # Xstep: Crossline bin size in meters
+    header[3] = 0.0  # Yor1: Y coordinate of bin (1,1) (typically 0)
 
-    # Write the data to the binary file
+    header[4] = y_size  # Ysize: Number of inline bins
+    header[5] = y_step  # Ystep: Inline bin size in meters
+    header[6] = 0.0  # Zor1: Starting depth/time (typically 0)
+    header[7] = z_size  # Zsize: Number of depth/time bins
+
+    header[8] = z_step  # Zstep: Depth/time bin size in meters
+    # Indices 9-11: Reserved (0.0)
+
+    header[12] = cfst  # Cfst: First crossline number
+    header[13] = sfst  # Sfst: First inline number
+
+    header[16] = cinc  # Cinc: Crossline number increment
+    header[17] = sinc  # Sinc: Inline number increment
+    # Indices 18-19: Reserved (0.0)
+
+    header[20] = dist_unit  # DistUnit: Distance units indicator
+    header[21] = angle_unit  # AngleUnit: Angle units indicator
+    header[22] = north_angle  # NorthAngle: Reserved for future use
+    header[23] = rot_angle  # RotAngle: Coordinate system rotation in radians
+
+    # Convert header to byte array for direct manipulation
+    header_bytes = header.view(np.uint8)
+
+    # Store UTM coordinates at byte offset 96 (24 floats * 4 bytes)
+    # Format: [int32 X, float32 X_frac, int32 Y, float32 Y_frac]
+    utm_x_int = int(utm_x)
+    utm_x_frac = utm_x - utm_x_int
+    utm_y_int = int(utm_y)
+    utm_y_frac = utm_y - utm_y_int
+
+    # Write UTM coordinates using struct packing
+    pos = 96  # Byte position for UTM coordinates
+    struct.pack_into('i', header_bytes, pos, utm_x_int)  # X integer
+    struct.pack_into('f', header_bytes, pos + 4, utm_x_frac)  # X fraction
+    struct.pack_into('i', header_bytes, pos + 8, utm_y_int)  # Y integer
+    struct.pack_into('f', header_bytes, pos + 12, utm_y_frac)  # Y fraction
+
+    # Write to file
     with open(filename, 'wb') as f:
-        # Write header
-        header.astype(np.float32).tofile(f)
+        f.write(header_bytes)  # 512-byte header
 
-        # Write UTM coordinates
-        utm_x_int_bytes = np.int32(utm_x_int).tobytes()
-        utm_x_frac_bytes = np.float32(utm_x_frac).tobytes()
-        utm_y_int_bytes = np.int32(utm_y_int).tobytes()
-        utm_y_frac_bytes = np.float32(utm_y_frac).tobytes()
-
-
-        f.write(utm_x_int_bytes)
-        f.write(utm_x_frac_bytes)
-        f.write(utm_y_int_bytes)
-        f.write(utm_y_frac_bytes)
-
-
-
-        # # Calculate the current position in the file (after writing header and UTM coords)
-        # current_position = f.tell()
-        # print(current_position)
-        # # Calculate the padding size needed to reach 512 bytes
-        # padding_size = 512 - current_position
-        #
-        # # Check if padding size is negative (this should never happen, but it's good to be safe)
-        # if padding_size < 0:
-        #     raise ValueError(f"Calculated padding size is negative: {padding_size}.  This indicates an error in header size calculation.")
-        #
-        #
-        # # Pad the rest of the header with zeros to reach 512 bytes
-        # if padding_size > 0: # Check if we need padding
-        #      f.write(np.zeros(padding_size, dtype=np.uint8).tobytes())
-
-        # Write the velocity model data
-        velocity_model.astype(np.float32).tofile(f)
+        # Write 3D array in Z,Y,X order (depth-fastest)
+        f.write(np.ascontiguousarray(velocity_model, dtype=np.float32).tobytes())

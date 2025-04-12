@@ -267,22 +267,21 @@ class VelocityModelVisualizer:
         )
 
     def save_model_to_fdm(self, key):
-        velocity_model = self.output_model.reshape((self.size_x, self.size_y, self.size_z))
         write_fdm(
             self.dir_save_fdm / f'{key}.fdm',
-            velocity_model,
+            self.output_model.reshape((self.size_z, self.size_y, self.size_x)),
             self.size_x,
             self.size_y,
             self.size_z,
             self.dx,
             self.dy,
             self.dz,
-            1,
-            2,
-            np.pi,
-            0,
-            np.int32(self.x_new),
-            self.x_new - np.int32(self.x_new),
-            np.int32(self.y_new),
-            self.y_new - np.int32(self.y_new),
+            cinc = 1,
+            sinc = 1,
+            dist_unit = 1,
+            angle_unit = 2,
+            north_angle = np.pi,
+            rot_angle = 0,
+            utm_x = self.x_new[0],
+            utm_y = self.x_new[0],
         )
