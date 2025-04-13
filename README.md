@@ -107,7 +107,7 @@ https://clck.ru/3LDvC9
    ```
    должна отобразится версия 3.10.11
 
-5. В каталоге с проектом создайте виртуальную среду:
+5. В каталоге с проектом создайте виртуальную среду Python:
    ```bash
    python -m venv <venv_name>
    ```
@@ -120,7 +120,7 @@ https://clck.ru/3LDvC9
    ```bash
    source <venv_name>/bin/activate
    ```
-7. Установите все необходимые пакеты из окального каталога:
+7. Установите все необходимые пакеты из локального каталога:
    ```bash
    pip install --no-index --find-links=./packages -r requirements.txt
    ```
