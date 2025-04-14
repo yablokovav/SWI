@@ -8,24 +8,20 @@ https://docs.google.com/document/d/1zbgvVUEJEtaVe5a9OVKEFZOM0MUto0jHu3e32z1EUN0/
 
 ## Установка
 1. Скачать архив:
-   - в Windows - распаковать с помощью файлового менеджера(необходим 7-Zip или WinRar) или через терминал
+   - в Windows - распаковать с помощью файлового менеджера(необходим 7-Zip или WinRar) или через терминал:
    ```PowerShell
-   "C:\Program Files\7-Zip\7z.exe" x SWI.7z
+   "C:\Program Files\7-Zip\7z.exe" x SWI-main.7z
    ```
    заменить "C:\Program Files\7-Zip\7z.exe" на свой путь до исполняемого файла 7-Zip при необходимости
-   - в Linux - при необходимости установить 7zip:
+   - в Linux - для успешной установки необходимы следующие компоненты 7-Zip, build-essential, tk-dev, libffi-dev, tcl-dev, libssl-dev(для установки дополнительных библиотек при необходимости):
+   распаковать архив:
    ```bash
-   sudo apt-get update
-   sudo apt-get install unzip
-   ```
-   затем распаковать архив:
-   ```bash
-   unzip SWI.zip
+   unzip SWI-main.zip
    ```
 
 2. Перейдите в директорию проекта:
    ```bash
-   cd SWI
+   cd SWI-main
    ```
 
 3. Установите питон:
@@ -54,7 +50,7 @@ https://docs.google.com/document/d/1zbgvVUEJEtaVe5a9OVKEFZOM0MUto0jHu3e32z1EUN0/
    ```bash
    sudo mkdir -p /opt/python3.10
    sudo chown $USER:$USER /opt/python3.10
-   make install
+   sudo make install
    ```
    добавьте в PATH:
    - откройте файл ~/.bashrc (или ~/.bash_profile, ~/.zshrc) и добавьте следующие строки в конец файла:
@@ -96,8 +92,13 @@ https://docs.google.com/document/d/1zbgvVUEJEtaVe5a9OVKEFZOM0MUto0jHu3e32z1EUN0/
    source <venv_name>/bin/activate
    ```
 8. Установите все необходимые пакеты из локального каталога:
+   - в Windows:
+   ```PowerShell
+   pip install --no-index --find-links=./packages_for_windows -r .\requirements_for_windows.txt
+   ```
+   - в Linux:
    ```bash
-   pip install --no-index --find-links=./packages -r requirements.txt
+   pip install --no-index --find-links=./packages_for_linux -r requirements_for_linux.txt
    ```
 
 ## Запуск обработки
@@ -107,7 +108,6 @@ https://docs.google.com/document/d/1zbgvVUEJEtaVe5a9OVKEFZOM0MUto0jHu3e32z1EUN0/
    ```bash
    python _1_preprocessing_spectral_run.py
    ```
-
 2. Запуск инверсии:
      ```bash
      poetry _2_inversion_run.py
