@@ -78,10 +78,15 @@ https://docs.google.com/document/d/1zbgvVUEJEtaVe5a9OVKEFZOM0MUto0jHu3e32z1EUN0/
    должна отобразится версия 3.10.11
 
 5. В каталоге с проектом создайте виртуальную среду Python:
-   ```bash
+   - в Windows:
+   ```PowerShell
    python -m venv <venv_name>
    ```
-6. Активируте виртуальную среду:
+   - в Linux:
+   ```
+   python3.10 -m venv <venv_name>
+   ```
+7. Активируте виртуальную среду:
    - в Windows:
    ```PowerShell
    <venv_name>\Scripts\activate
@@ -90,7 +95,7 @@ https://docs.google.com/document/d/1zbgvVUEJEtaVe5a9OVKEFZOM0MUto0jHu3e32z1EUN0/
    ```bash
    source <venv_name>/bin/activate
    ```
-7. Установите все необходимые пакеты из локального каталога:
+8. Установите все необходимые пакеты из локального каталога:
    ```bash
    pip install --no-index --find-links=./packages -r requirements.txt
    ```
