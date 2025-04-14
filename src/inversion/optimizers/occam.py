@@ -135,7 +135,7 @@ class Occam:
                 dvr_dvs = self._compute_sensitivity(vs_rest, thickness_curr, self.frequencies[mode_i], mode_i)
 
                 vs_rest_curr = self._compute_new_vs(delt, dvr_dvs, vs_rest, dc_rest[mode_i], self.velocity_phases[mode_i], float(self.mu_list[loss_indx]), mode_i)
-                vs_rest_curr = np.clip(vs_rest_curr, np.min(vs_init), np.max(vs_init) )
+                vs_rest_curr = np.clip(vs_rest_curr, 100, np.max(vs_init) )
 
                 dc_rest_curr = self._compute_new_dc(vs_rest_curr, thickness_curr, self.frequencies[mode_i], mode_i)
 
