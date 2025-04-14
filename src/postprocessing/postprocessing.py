@@ -271,7 +271,7 @@ class VelocityModelVisualizer:
     def save_model_to_fdm(self, key):
         write_fdm(
             self.dir_save_fdm / f'{key}.fdm',
-            self.output_model.reshape((self.size_z, self.size_y, self.size_x)),
+            self.output_model.reshape((self.size_x, self.size_y, self.size_z)),
             self.size_x,
             self.size_y,
             self.size_z,

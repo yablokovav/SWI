@@ -395,9 +395,9 @@ def write_fdm(filename: str, velocity_model: np.ndarray, x_size: int, y_size: in
         - The 3D array is written in Z,Y,X order with depth varying fastest
     """
     # Validate input dimensions
-    assert velocity_model.shape == (z_size, y_size, x_size), (
+    assert velocity_model.shape == (x_size, y_size, z_size), (
         f"Velocity model shape {velocity_model.shape} doesn't match "
-        f"specified dimensions (z={z_size}, y={y_size}, x={x_size})"
+        f"specified dimensions (x={x_size}, y={y_size}, z={z_size})"
     )
 
     # Initialize header with 128 float32 values (512 bytes total)
