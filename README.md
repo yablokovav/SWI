@@ -7,14 +7,21 @@
 https://docs.google.com/document/d/1zbgvVUEJEtaVe5a9OVKEFZOM0MUto0jHu3e32z1EUN0/edit?tab=t.0
 
 ## Установка
-1. Скачать архив:
-   - в Windows - распаковать с помощью файлового менеджера(необходим 7-Zip или WinRar) или через терминал:
+1. Скачайте архив:
+   - в Windows - распакуйте с помощью файлового менеджера(необходим 7-Zip или WinRar) или через терминал:
    ```PowerShell
    "C:\Program Files\7-Zip\7z.exe" x SWI-main.7z
    ```
-   заменить "C:\Program Files\7-Zip\7z.exe" на свой путь до исполняемого файла 7-Zip при необходимости
-   - в Linux - для успешной установки необходимы следующие компоненты 7-Zip, build-essential, tk-dev, libffi-dev, tcl-dev, libssl-dev(для установки дополнительных библиотек при необходимости):
-   распаковать архив:
+   замените "C:\Program Files\7-Zip\7z.exe" на свой путь до исполняемого файла 7-Zip при необходимости
+   - в Linux - для успешной установки необходимы следующие компонент:
+        - 7-Zip;
+        - build-essential;
+        - tk-dev;
+        - libffi-dev;
+        - tcl-dev;
+        - libssl-dev(для установки дополнительных библиотек при необходимости).
+   
+   распакуйте архив:
    ```bash
    unzip SWI-main.zip
    ```
