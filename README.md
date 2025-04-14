@@ -32,12 +32,20 @@ https://docs.google.com/document/d/1zbgvVUEJEtaVe5a9OVKEFZOM0MUto0jHu3e32z1EUN0/
    ```
 
 3. Установите питон:
-   - в Windows - зуапустите файл python-3.10.11-amd64.exe:
+   - в Windows - зайдите в директорию packages_for_windows:
+   ```PowerShell
+   cd packages_for_windows
+   ```
+   зуапустите файл python-3.10.11-amd64.exe:
    ```PowerShell
    python-3.10.11-amd64.exe /quiet InstallAllUsers=1 AssociateFiles=1 Include_doc=1 Include_pip=1 Include_test=0 AddPythonToPath=1       InstallDir="C:\Users\<User>\AppData\Local\Programs\Python\Python310"
    ```
    перезпустите терминал
-   - в Linux - распакуйте архив Python-3.10.11.tgz:
+   - в Linux  - зайдите в директорию packages_for_linux:
+   ```PowerShell
+   cd packages_for_linux
+   ```
+   распакуйте архив Python-3.10.11.tgz:
    ```bash
    tar -xzf Python-3.10.11.tgz
    ```
