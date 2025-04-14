@@ -147,10 +147,10 @@ class BaseOptimizator:
         dc_rest = [self._compute_dispersion_curves(computer_dc, self.frequencies[mode_i], mode_i) for mode_i in range(self.max_num_modes)]
         return dc_rest
 
-    def run(self) -> tuple[np.ndarray, np.ndarray, list]:
+    def run(self) -> tuple[np.ndarray, np.ndarray, list, None]:
         """Выполняет многократные запуски инверсии дисперсионных кривых и возвращает лучшие параметры."""
         self.count_agents = 10*(np.size(self.velocity_shear_range, 0) + np.size(self.thicknesses_range, 0))
         models = self._generate_models()
         vs_rest, thk_rest = self.find_median_model(models)
         dc_rest = self.compute_dc_rest(vs_rest, thk_rest)
-        return vs_rest, thk_rest, dc_rest
+        return vs_rest, thk_rest, dc_rest, None

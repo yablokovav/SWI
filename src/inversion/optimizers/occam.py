@@ -192,7 +192,7 @@ class Occam:
         vs_rest = vs_rest_tmp + vs_rest_tmp*np.random.uniform(-vs_perturbation, vs_perturbation, len(vs_rest_tmp))
         return vs_rest
 
-    def run(self) -> tuple[np.ndarray, np.ndarray, list]:
+    def run(self) -> tuple[np.ndarray, np.ndarray, list, np.ndarray]:
         """
         Основной метод запуска инверсии.
         Возвращает рассчитанные сдвиговые скорости, толщины слоев и дисперсионную кривую.
@@ -200,5 +200,5 @@ class Occam:
         self._create_computer_dc()
         vs_init, thk_init, dc_rest = self._compute_start_model()
         vs_rest, dc_rest, loss = self._inversion(vs_init, thk_init, dc_rest)
-        return vs_rest, thk_init, dc_rest
+        return vs_rest, thk_init, dc_rest, vs_init
 

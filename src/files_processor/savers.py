@@ -18,7 +18,7 @@ MULTIPLIER_FOR_FREQ_IN_SEGY = 1000  # Multiplier for correct saving values of fr
 MULTIPLIER_FOR_DT_IN_SEGY = 1e6  # Multiplier for correct saving dt in SEGY-file
 DIVIDER_FOR_VEL_IN_SEGY = 1000  # Divider for correct saving velocity interval in SEGY-file
 
-def save_dc_rest_image(img_name, dc_obs, dc_rest, freq, vs, thk, maxdepth, ranges, method):
+def save_dc_rest_image(img_name, dc_obs, dc_rest, freq, vs, thk, vs_init, maxdepth, ranges, method):
     """
    Saves a diagnostic image comparing observed and restored dispersion curves
    and the restored velocity model.
@@ -71,6 +71,9 @@ def save_dc_rest_image(img_name, dc_obs, dc_rest, freq, vs, thk, maxdepth, range
         vs_max = np.r_[ranges.velocity_shear_range[:, 1], ranges.velocity_shear_range[-1, 1]]
         ax[1].step(vs_min, depth_min, color='gray', label = 'Model ranges')
         ax[1].step(vs_max, depth_max, color='gray')
+    else:
+        vs_init = np.r_[vs_init, vs_init[-1]]
+        ax[1].step(vs_init, depth, color='gray', label='Start model')
     ax[1].legend(loc='upper center')
 
     fig.tight_layout()
