@@ -1,0 +1,81 @@
+# Основной управляющий файл, задает основные параметры для обработки данных методом SWI
+preprocessing:
+  ffid_start: 900
+  ffid_stop: 1100
+  ffid_increment: 1
+  num_sources_on_cpu: 1
+  path4ffid_file: C:\Users\BubnovEI\Desktop\SWI_project\SWI\unittests\data_cdp_test\cdp.txt
+
+
+  data_dir: C:\Users\BubnovEI\Desktop\SWI_project\SWI\unittests\data_cdp_test
+  scaler_to_elevation: -10000
+  scaler_to_coordinates: -100
+  type_data: 3d
+  offset_min: 100
+  offset_max: 800
+  snr: 0.4
+  qc_preprocessing: True
+
+  parameters_3d:
+    sort_3d_order: cdp
+    num_sectors: 5
+
+spectral:
+  spectral_method: sfk
+  fmin: 1
+  fmax: 10
+  vmin: 100
+  vmax: 1400
+  extract_dc_method: dbscan
+  path4dc_limits: C:\Users\BubnovEI\Desktop\SWI_project\SWI\configs\real_3d\dc_limits.csv
+  qc_spectral: True
+
+  advanced:
+    desired_nt: 3000
+    desired_nx: 1000
+    smooth_data: True
+    width: 0.6
+    peak_fraction: 0.8
+    cutoff_fraction: 0.4
+    dc_error_thr: 0.2
+
+inversion:
+  inversion_method: occam
+  niter: 80
+  max_num_modes: 1
+  wavetype: rayleigh
+  veltype: phase
+  vp_model: vp
+  lock_vp: False
+  path4vp_model: C:\Users\BubnovEI\Desktop\SWI_project\SWI\configs\real_3d\vp_model.csv
+  qc_inversion: True
+
+  global_search:
+    test_count: 1
+    path4vs_limits:
+    xi: 3
+    get_num_layers: every
+
+  local_search:
+    nlay: 10
+
+postprocessing:
+  max_depth: 200
+  save_fdm: True
+  d_x: 20
+  d_y: 100
+  d_z: 1
+  smooth_factor: 150
+  remove_outliers_smoothing: True
+  vmin_in_model: 200
+  vmax_in_model: 1400
+  save_segy: True
+  error_thr: 0.2
+
+  parameters_2d:
+    interp_dim: 1d
+
+  parameters_3d:
+    num_xslices_3d: 3
+    num_yslices_3d: 3
+    num_zslices_3d: 3
