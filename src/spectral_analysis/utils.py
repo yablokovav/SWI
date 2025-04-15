@@ -226,7 +226,7 @@ def konno_and_ohmachi(frequencies: np.ndarray,
     return smoothed_spectrum
 
 
-def curves_processing(frequencies: list[np.ndarray], dcs: list[np.ndarray], dc_error_thr: float) \
+def curves_processing(frequencies: list[np.ndarray], dcs: list[np.ndarray], dc_error_thr: float, ampl: list[np.ndarray], dc_ampl_thr: float) \
         -> tuple[list[np.ndarray], list[np.ndarray], list]:
     """
     Processes dispersion curves by interpolating, removing outliers, smoothing, and checking approximation.
@@ -251,11 +251,25 @@ def curves_processing(frequencies: list[np.ndarray], dcs: list[np.ndarray], dc_e
             - A list of boolean flags indicating whether each dispersion curve
               passed the approximation quality check (List[bool]).
     """
-    # Interpolate the dispersion curve if it has fewer than 10 points
 
+
+
+    # Interpolate the dispersion curve if it has fewer than 10 points
     flags_rejecting_modes = []
-    for idx, curve in enumerate(zip(frequencies, dcs)):
-        frequency, dc = curve
+    for idx, curve in enumerate(zip(frequencies, dcs, ampl)):
+        frequency, dc, ampl_dc = curve
+
+        # print("frequency_raw, dc_raw", frequency_raw, dc_raw)
+        # frequency = frequency_raw[0]
+        # dc = dc_raw[0]
+        # for indx_ampl in range(1, len(ampl_dc)):
+        #     if ampl_dc[indx_ampl-1] - ampl_dc[indx_ampl] < 0 and ampl_dc[indx_ampl] < dc_ampl_thr:
+        #         break
+        #     frequency.append(frequency_raw[indx_ampl])
+        #     dc.append(dc_raw[indx_ampl])
+        #
+        # print("frequency, dc", frequency, dc)
+
         if len(dc) < 10:
             frequency_new = np.linspace(frequency.min(), frequency.max(), 10)
             dc = interp1d(frequency, dc)(frequency_new)  # Interpolate within the range of frequency
@@ -349,12 +363,13 @@ def spectral_processing(config_parameters,
     config_parameters.vf_transform.run(spectra)
 
     # Extract the dispersion curve (DC) using the peaker object
-    frequencies, dcs, freq_limits, lover_v, upper_v = config_parameters.peaker.peak_dc(
+    frequencies, dcs, freq_limits, lover_v, upper_v, ampl = config_parameters.peaker.peak_dc(
         spectra, config_parameters.peak_fraction, config_parameters.cutoff_fraction
     )
 
     # Curves processing
-    frequencies, dcs, flags_rejecting_modes = curves_processing(frequencies, dcs, config_parameters.dc_error_thr)
+    dc_ampl_thr = 0.9
+    frequencies, dcs, flags_rejecting_modes = curves_processing(frequencies, dcs, config_parameters.dc_error_thr, ampl, dc_ampl_thr)
 
     spec_dc_dir, spec_image_dir, spec_segy_dir = config_parameters.save_dir_spectral
 

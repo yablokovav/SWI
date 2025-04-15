@@ -67,8 +67,8 @@ def inversion_processor(module_dirs: dict[str, list[Path]], inv_model: Inversion
 
     """
 
-    # Remove all files in directories
-    [[item.unlink() for item in dir_.glob("*")] for dir_ in module_dirs["inversion"]]  # Clean output directories
+    # # Remove all files in directories
+    # [[item.unlink() for item in dir_.glob("*")] for dir_ in module_dirs["inversion"]]  # Clean output directories
 
     log_inversion: dict[str, Any] = {"Inverted dispersion curves": 0, "Restored Vs-models stored in": "",
                                       "Images Vs-models stored in": ""}  # Initialize inversion log

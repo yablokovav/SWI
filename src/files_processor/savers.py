@@ -8,7 +8,7 @@ import io
 from PIL import Image
 from src.spectral_analysis.models import Spectra
 from scipy.interpolate import interp1d
-plt.switch_backend('Agg')
+# plt.switch_backend('Agg')
 
 HEADER_BYTE_FOR_FREQ = 0
 HEADER_BYTE_CDP_X = 71

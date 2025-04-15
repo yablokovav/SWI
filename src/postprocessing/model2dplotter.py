@@ -4,7 +4,6 @@ from pathlib import Path
 
 import numpy as np
 import plotly.graph_objects as go
-from matplotlib import pyplot as plt
 from screeninfo import get_monitors
 from src.files_processor.readers import get_filenames
 

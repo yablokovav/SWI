@@ -72,7 +72,7 @@ class VelocityModelVisualizer:
     def run(self, models_dir) -> None:
 
         # Remove all files in directories
-        [[item.unlink() for item in dir_.glob("*")] for dir_ in [self.dir_save_bin, self.dir_save_segy, self.dir_save_fdm]]
+        # [[item.unlink() for item in dir_.glob("*")] for dir_ in [self.dir_save_bin, self.dir_save_segy, self.dir_save_fdm]]
 
         files_by_basename = utils.group_files_by_basename(models_dir)
         if not files_by_basename:

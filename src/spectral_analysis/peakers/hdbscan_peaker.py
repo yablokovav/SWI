@@ -1,5 +1,7 @@
 import hdbscan
 import numpy as np
+from matplotlib import pyplot as plt
+
 from src.spectral_analysis.models import Spectra
 from src.spectral_analysis.peakers.base_peaker import Peaker
 np.random.seed(42)
@@ -70,7 +72,7 @@ class PeakerHDBSCAN(Peaker):
         return freq, vel
 
     @staticmethod
-    def _get_curve(data: np.ndarray, fcount: int, vcount: int, vmin: float, cutoff_fraction) -> tuple[list, list]:
+    def _get_curve(vf_spectra:np.ndarray, data: np.ndarray, fcount: int, vcount: int, vmin: float, cutoff_fraction, shift: int) -> tuple[list, list, list]:
         """
         Gets the dispersion curves.
 
@@ -88,12 +90,13 @@ class PeakerHDBSCAN(Peaker):
         """
         nonzero_coord = np.column_stack(np.nonzero(data))  # (vel, freq)
         freq, vel = PeakerHDBSCAN._remove_outbreaks(nonzero_coord, fcount, vcount, cutoff_fraction)  # (vel, freq)
-        px, py = [], []
+        px, py, ampl = [], [], []
         for mode in zip(freq, vel):
             px_tmp, py_tmp = PeakerHDBSCAN._segments_fit(mode[0], mode[1])
-            px.append(px_tmp)
+            px.append(px_tmp - shift)
             py.append(py_tmp + vmin)
-        return px, py
+            ampl.append(vf_spectra[np.int32(py_tmp), np.int32(px_tmp)])
+        return px, py, ampl
 
     def peak_dc(self, spectra: Spectra, peak_fraction: float, cutoff_fraction: float) -> tuple[list, list, np.ndarray, np.ndarray, np.ndarray]:
         """
@@ -115,10 +118,14 @@ class PeakerHDBSCAN(Peaker):
         """
         freq, upper_limits, lower_limits, f_indx_spectrum, mask = self.apply_croping(spectra, peak_fraction)
         freq_limits = np.copy(freq)
-        px, py = PeakerHDBSCAN._get_curve(mask, len(spectra.frequencies), len(spectra.velocities), float(spectra.velocities[0]), cutoff_fraction)
-        shift = f_indx_spectrum[0]
-
-        freq_shifted = []
-        for px_tmp in px:
-            freq_shifted.append(freq[px_tmp - shift])
-        return freq_shifted, py, freq_limits, lower_limits, upper_limits
+        px, py, ampl = PeakerHDBSCAN._get_curve(
+            spectra.vf_spectra,
+            mask,
+            len(spectra.frequencies),
+            len(spectra.velocities),
+            float(spectra.velocities[0]),
+            cutoff_fraction,
+            f_indx_spectrum[0]
+        )
+        freq_all = [freq[px_tmp] for px_tmp in px]
+        return freq_all, py, freq_limits, lower_limits, upper_limits, ampl

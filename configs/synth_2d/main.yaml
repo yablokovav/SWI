@@ -20,7 +20,7 @@ preprocessing:
     num_sectors: 10
 
 spectral:
-  spectral_method: sfk
+  spectral_method: fkt
   fmin: 0
   fmax: 30
   vmin: 100
@@ -50,7 +50,7 @@ inversion:
   qc_inversion: True
 
   local_search:
-    nlay: 25
+    nlay: 20
 
   global_search:
     test_count: 1
@@ -60,8 +60,8 @@ inversion:
 
 postprocessing:
   max_depth: 50
-  d_x: 5
-  d_y: 5
+  d_x: 4
+  d_y: 4
   d_z: 1
   smooth_factor: 10
   remove_outliers_smoothing: True

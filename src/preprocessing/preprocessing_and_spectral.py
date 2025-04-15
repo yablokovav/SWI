@@ -183,15 +183,14 @@ class SeismicPreprocessorSpectral:
             endian
         )
 
-
-        # Remove all files in the specified directories
-        for dir_ in save_dirs['preprocessing']:
-            for item in dir_.glob("*"):
-                item.unlink()  # Delete each file
-
-        for dir_ in save_dirs["spectral_analysis"]:
-            for item in dir_.glob("*"):
-                item.unlink()  # Delete each file
+        # # Remove all files in the specified directories
+        # for dir_ in save_dirs['preprocessing']:
+        #     for item in dir_.glob("*"):
+        #         item.unlink()  # Delete each file
+        #
+        # for dir_ in save_dirs["spectral_analysis"]:
+        #     for item in dir_.glob("*"):
+        #         item.unlink()  # Delete each file
 
         return instance
 
