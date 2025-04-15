@@ -556,11 +556,11 @@ class SeismicPreprocessorSpectral:
                     "Preprocessed seismograms stored in"] = f"\n{self.save_dir_preprocessing[0]}"  # add type to save
             if self.qc_spectral:  # Verify t the qualiti control its enable
                 # add an Image value to log type
-                self.log_data["Images V-f spectra stored in"] = f"\n{self.save_dir_spectral[0]}"
+                self.log_data["Images V-f spectra stored in"] = f"\n{self.save_dir_spectral[1]}"
                 # add a segy values to the log
                 self.log_data["Segy V-f spectra stored in"] = f"\n{self.save_dir_spectral[2]}"
             # Add the curve discretion to the log
-            self.log_data["Dispersion curves stored in"] = f"\n{self.save_dir_spectral[1]}"
+            self.log_data["Dispersion curves stored in"] = f"\n{self.save_dir_spectral[0]}"
 
         create_log(self.log_data, self.save_dir_preprocessing[0].parents[2],
                    'preprocessing_and_spectral_analysing', self.error)  # create log to report and sent to next function
