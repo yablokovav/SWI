@@ -173,7 +173,7 @@ def save_model(
         velocity_shear: list[float],
         thickness: list[float],
         dc_rest: list[float],
-        vs_init,
+        vs_init: np.ndarray,
         disp_curve: "DispersionCurve",
         max_depth: float,
         ranges: [list, Ranges],
@@ -194,10 +194,18 @@ def save_model(
         velocity_shear (List[float]): List of shear wave velocities for each layer in the inverted model (m/s).
         thickness (List[float]): List of layer thicknesses in the inverted model (m).
         dc_rest (List[float]): List of values representing the rest of the computed dispersion curve data.
+        vs_init (np.ndarray): NumPy array of initial shear wave velocities used as a starting point for the inversion (m/s).
         disp_curve (DispersionCurve): The DispersionCurve object containing information about the observed
                                        dispersion curve, such as CMP location, relief, spectral name, and
                                        the observed velocity and frequency values.
         max_depth (float): The maximum depth of the velocity model for plotting purposes (m).
+        ranges (Union[List, Ranges]): Either:
+                                        - A list (currently unused, retained for potential future use).
+                                        - An instance of the `Ranges` class, containing information about the allowed
+                                          range of depths, velocities, and thicknesses used during the inversion.
+        method (str): The inversion method used (e.g., 'occam').  This parameter is not directly used within
+                      this function, but is retained for potential future use, such as conditional logic for
+                      saving different types of model information.
         path4save_bins_dir (Path): The directory to save the binary file containing the inverted velocity model.
         path4save_image_dir (Path): The directory to save the QC image, if `qc_inversion` is True.
         qc_inversion (bool): A flag indicating whether to save the QC image. If True, the image is saved; otherwise, it is skipped.
