@@ -144,7 +144,10 @@ def inversion_processor(module_dirs: dict[str, list[Path]], inv_model: Inversion
 
     # More readable
     log_inversion["Restored Vs-models stored in"] += "\n "
-    log_inversion["Images Vs-models stored in"] += "\n "
+    if not inv_model.qc_inversion:
+        log_inversion.pop("Images Vs-models stored in")
+    else:
+        log_inversion["Images Vs-models stored in"] += "\n "
     log_inversion["Inverted dispersion curves"] = str(log_inversion["Inverted dispersion curves"]) + "\n"
 
     create_log(log_inversion, module_dirs["spectral_analysis"][0::2][0].parents[4], "inversion")  # Create log file
