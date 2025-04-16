@@ -117,32 +117,33 @@ def read_curves(models, h_max, mape_thr):
 
 def robust_smooth_2d(y, s: Optional[float], robust: True):
     """
-    Interpolate missing values and smooth a 2D numpy array with optional robust
-    outlier removal. Missing values in the array (where interpolation is
-    desired) must be assigned numpy.nan values.
+    Smooth a 2D numpy array with optional robust outlier rejection and
+    interpolation of missing values (NaNs).
 
-    Argument:
-        y (numpy array): The 2D numpy array to be interpolated and smoothed.
+    This function performs smoothing of 2D data using Discrete Cosine Transform (DCT)
+    and penalized the least squares, optionally applying robust weights to reduce
+    the influence of outliers. Missing values in the input array (`np.nan`)
+    are automatically interpolated during smoothing.
 
-    Optional Keyword Arguments:
-        s (float): Smoothing factor to over-ride the automatically computed
-            smoothing factor.
-        robust (boolean): Apply robust outlier removal. Specify as True
-            (default) or False.
-
+    Args:
+        y : np.ndarray
+            A 2D NumPy array to be smoothed. Missing values should be marked as `np.nan`.
+        s : float or None
+            Optional smoothing factor. If `None`, it will be automatically computed using
+            Generalized Cross Validation (GCV). A larger `s` value results in more smoothing.
+        robust : bool
+            If `True`, the algorithm performs robust smoothing by iteratively reducing
+            the influence of outliers. If `False`, standard smoothing is applied.
     Returns:
-        z (numpy array): Smoothed version of the input array.
-        s (float): Smoothing factor used to generate the output array.
+        z : np.ndarray
+            The smoothed 2D array, with interpolated values replacing `np.nan` and outliers reduced
+            (if `robust=True`).
 
-    Examples:
-        1. Allow automatic smoothing factor computation and robust outlier
-           removal:
-                robust_smooth_2d(y)
-        2. Manually over-ride the smoothing factor computation:
-                robust_smooth_2d(y, s=15)
-        3. Over-ride smoothing factor computation and turn off the default
-           robust smoothing:
-                robust_smooth_2d(y, s=15, robust=False)
+    Notes
+    -----
+    - Uses DCT-based fast smoothing for performance and accuracy.
+    - Up to 3 robust iterations are performed to stabilize the result if `robust=True`.
+    - The smoothing factor `s` is optimized via GCV when not provided.
     """
 
     if s is None:
