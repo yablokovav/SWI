@@ -112,7 +112,7 @@ class PostprocessingModel(BaseModel):
     d_x: int
     d_y: int
     d_z: int
-    smooth_factor: float
+    smooth_factor: Optional[float]
     max_depth: float
     remove_outliers_smoothing: bool
     vmin_in_model: float

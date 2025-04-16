@@ -159,14 +159,17 @@ class PostprocessingChecker:
         Returns:
             tuple: Validation result (str) and updated error count (int).
         """
-        check_smooth_factor = check_parameter_type_and_value(
-            self.postprocessing_config[key],
-            float,
-            [0, None],
-            [True, False]
-        )
-        result = str(self.postprocessing_config[key]) + check_smooth_factor.message
-        return result, count_mistakes_postprocessing + check_smooth_factor.is_error
+        if self.postprocessing_config[key]:
+            check_smooth_factor = check_parameter_type_and_value(
+                self.postprocessing_config[key],
+                float,
+                [0, None],
+                [True, False]
+            )
+            result = str(self.postprocessing_config[key]) + check_smooth_factor.message
+            return result, count_mistakes_postprocessing + check_smooth_factor.is_error
+        else:
+            return self.postprocessing_config[key], count_mistakes_postprocessing
 
     def __check_remove_outliers_smoothing(self, count_mistakes_postprocessing: int, key: str):
         """
