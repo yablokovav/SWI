@@ -8,7 +8,7 @@ import io
 from PIL import Image
 from src.spectral_analysis.models import Spectra
 from scipy.interpolate import interp1d
-# plt.switch_backend('Agg')
+plt.switch_backend('Agg')
 
 HEADER_BYTE_FOR_FREQ = 0
 HEADER_BYTE_CDP_X = 71
@@ -40,12 +40,7 @@ def save_dc_rest_image(img_name, dc_obs, dc_rest, freq, vs, thk, vs_init, maxdep
                         restored model.
        thk (list[float]): List of layer thicknesses for the restored
                          model.
-       vs_init (np.ndarray, Optional): 1D array of initial S-wave velocities corresponding to depths.
-       ranges (object, optional): An object containing depth, Vp and Vs range information (min/max).
-                                   If provided, the plot will show the uncertainty range for Vp and Vs.
        maxdepth (float): Maximum depth to display in the velocity model plot.
-       method (str, optional): Method used for the inversion.
-       If 'occam', the start model is plotted instead of ranges. Defaults to 'occam'.
    """
     fig, ax = plt.subplots(1, 2, figsize=(10, 5))
     # Plot the dispersion curves
