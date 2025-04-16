@@ -25,6 +25,7 @@ class VelocityModelVisualizer:
         interp_dim: str = "1d",
         smooth_factor: int = 10,
         remove_outliers_smoothing = False,
+        fill_missing_values = True,
         num_xslices_3d: int = 5,
         num_yslices_3d: int = 5,
         num_zslices_3d: int = 5,
@@ -45,6 +46,7 @@ class VelocityModelVisualizer:
         self.smooth_factor = smooth_factor
         self.data_type = data_type
         self.remove_outliers_smoothing = remove_outliers_smoothing
+        self.fill_missing_values = fill_missing_values
         self.num_xslices_3d = num_xslices_3d
         self.num_yslices_3d = num_yslices_3d
         self.num_zslices_3d = num_zslices_3d
@@ -119,7 +121,8 @@ class VelocityModelVisualizer:
                     VelocityModelVisualizer.interd2d(self, num_layers, projection)
 
                 #smoothing model
-                self.output_model = utils.robust_smooth_2d(self.output_model, s=self.smooth_factor, robust=self.remove_outliers_smoothing)
+                if self.smooth_factor != 0:
+                    self.output_model = utils.robust_smooth_2d(self.output_model, s=self.smooth_factor, robust=self.remove_outliers_smoothing)
 
                 #save binary-file of model
                 save_model_to_bin(self.dir_save_bin / f'{key}', self.output_model, self.x_new, self.y_new, self.z_new, self.elevation, projection)
@@ -198,7 +201,11 @@ class VelocityModelVisualizer:
 
     def _smooth_slice(self, x_grid, y_grid, output_model):
         vs3d_tmp = griddata((self.coord[:, 0], self.coord[:, 1]), output_model, (x_grid, y_grid))
-        vs3d_tmp = utils.robust_smooth_2d(vs3d_tmp, s=self.smooth_factor, robust=self.remove_outliers_smoothing)
+        mask_nan = np.argwhere(np.isnan(vs3d_tmp))
+        if self.smooth_factor != 0:
+            vs3d_tmp = utils.robust_smooth_2d(vs3d_tmp, s=self.smooth_factor, robust=self.remove_outliers_smoothing)
+        if not self.fill_missing_values:
+            vs3d_tmp[mask_nan[:, 0], mask_nan[:, 1]] = np.nan
         return vs3d_tmp
 
     def interp2d_by_depth_slices(self):
@@ -213,14 +220,14 @@ class VelocityModelVisualizer:
         print("Slise interpolation is done")
         # interpolation relief
         self.elevation = griddata((self.coord[:, 0], self.coord[:, 1]), self.elevation, (x_grid, y_grid))
-        self.elevation = utils.robust_smooth_2d(self.elevation, s=self.smooth_factor,
+        if self.smooth_factor != 0:
+            self.elevation = utils.robust_smooth_2d(self.elevation, s=self.smooth_factor,
                                              robust=self.remove_outliers_smoothing)
 
         # prepair for segy writing
         self.x_new, self.y_new = x_grid.reshape(self.size_x * self.size_y), y_grid.reshape(self.size_x * self.size_y)
         self.output_model = vs3d.reshape((self.size_x * self.size_y, self.size_z)).T
         self.elevation = np.int32(self.elevation).reshape(self.size_x * self.size_y)
-
 
     def save_model_yz_slices(self, key):
         indx_sort = np.lexsort([self.y_new, self.x_new])

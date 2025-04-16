@@ -115,6 +115,7 @@ class PostprocessingModel(BaseModel):
     smooth_factor: Optional[float]
     max_depth: float
     remove_outliers_smoothing: bool
+    fill_missing_values: bool
     vmin_in_model: float
     vmax_in_model: float
     save_segy: bool

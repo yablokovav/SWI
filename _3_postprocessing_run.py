@@ -41,6 +41,7 @@ for i, indx_inv in enumerate(range(0, len(module_dirs["inversion"]), 2)):
         smooth_factor = postprocessing.smooth_factor,
         interp_dim = postprocessing.parameters_2d.interp_dim,
         remove_outliers_smoothing = postprocessing.remove_outliers_smoothing,
+        fill_missing_values = postprocessing.fill_missing_values,
         num_xslices_3d = postprocessing.parameters_3d.num_xslices_3d,
         num_yslices_3d = postprocessing.parameters_3d.num_yslices_3d,
         num_zslices_3d = postprocessing.parameters_3d.num_zslices_3d,

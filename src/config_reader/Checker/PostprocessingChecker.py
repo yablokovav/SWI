@@ -8,6 +8,7 @@ POSTPROCESSING_PARAMETERS = [
     'd_z',
     'smooth_factor',
     'remove_outliers_smoothing',
+    'fill_missing_values',
     'vmin_in_model',
     'vmax_in_model',
     'save_segy',
@@ -190,6 +191,14 @@ class PostprocessingChecker:
         )
         result = str(self.postprocessing_config[key]) + check_remove_outliers_smoothing.message
         return result, count_mistakes_postprocessing + check_remove_outliers_smoothing.is_error
+
+    def __fill_missing_values(self, count_mistakes_postprocessing: int, key: str) ->tuple[str, int]:
+        check_fill_missing_values = check_datatype(
+            self.postprocessing_config[key],
+            bool
+        )
+        result = str(self.postprocessing_config[key]) + check_fill_missing_values.message
+        return result, count_mistakes_postprocessing + check_fill_missing_values.is_error
 
     def __check_model_vmin_vmax(self, count_mistakes_postprocessing: int, keys: tuple) -> tuple[str, str, int]:
         """
@@ -475,11 +484,19 @@ class PostprocessingChecker:
                 count_mistakes_postprocessing,  # Pass current error count
                 'smooth_factor'  # Specify parameter to check
             )
+
             (postprocessing_errors['remove_outliers_smoothing'],
              count_mistakes_postprocessing) = self.__check_remove_outliers_smoothing(
                 count_mistakes_postprocessing,  # Pass current error count
                 'remove_outliers_smoothing'  # Specify parameter to check
             )
+
+            (postprocessing_errors['fill_missing_values'],
+             count_mistakes_postprocessing) = self.__fill_missing_values(
+                count_mistakes_postprocessing,
+                'fill_missing_values'
+            )
+
             (postprocessing_errors['vmin_in_model'],
              postprocessing_errors['vmax_in_model'],
              count_mistakes_postprocessing) = self.__check_model_vmin_vmax(
