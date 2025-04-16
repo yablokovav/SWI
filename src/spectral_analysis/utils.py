@@ -7,6 +7,97 @@ from src.spectral_analysis.models import Seismogram
 from src.config_reader.models import DispersionCurve
 from src.files_processor.savers import save_spec_segy, save_spec_image
 
+
+def curves_processing(frequencies: list[np.ndarray], dcs: list[np.ndarray], dc_error_thr: float, ampl: list[np.ndarray], dc_ampl_thr: float) \
+        -> tuple[list[np.ndarray], list[np.ndarray], list]:
+    """
+    Processes dispersion curves by interpolating, removing outliers, smoothing, and checking approximation.
+
+    This function performs a series of processing steps on a list of dispersion
+    curves (`dcs`) and their corresponding frequencies (`frequencies`). The steps
+    include interpolating curves with fewer than 10 points, removing outliers,
+    smoothing using the Konno-Ohmachi function, and checking the approximation
+    quality using the `check_approximation` function.
+
+    Args:
+        frequencies (List[np.ndarray]): A list of NumPy arrays representing the
+            frequencies for each dispersion curve.
+        dcs (List[np.ndarray]): A list of NumPy arrays representing the dispersion
+            curves.
+        dc_error_thr (float): A threshold for the approximation quality check.
+
+    Returns:
+        Tuple[List[np.ndarray], List[np.ndarray], List[bool]]: A tuple containing:
+            - The processed list of frequencies (List[np.ndarray]).
+            - The processed list of dispersion curves (List[np.ndarray]).
+            - A list of boolean flags indicating whether each dispersion curve
+              passed the approximation quality check (List[bool]).
+    """
+
+
+
+    # Interpolate the dispersion curve if it has fewer than 10 points
+    flags_rejecting_modes = []
+    for idx, curve in enumerate(zip(frequencies, dcs, ampl)):
+        frequency, dc, ampl_dc = curve
+
+        trues_indices = longest_continuous_trues_indices(ampl_dc > (np.max(ampl_dc)+dc_ampl_thr)/2)
+
+        if len(trues_indices):
+            frequency = frequency[trues_indices]
+            dc = dc[trues_indices]
+        else:
+            flags_rejecting_modes.append(True)
+            continue
+
+
+        if len(dc) < 10:
+            frequency_new = np.linspace(frequency.min(), frequency.max(), 10)
+            dc = interp1d(frequency, dc)(frequency_new)  # Interpolate within the range of frequency
+            frequency = np.copy(frequency_new)
+
+        # Remove outliers from the dispersion curve
+        frequencies[idx], dcs[idx] = remove_outliers(frequency, dc)
+
+        flags_rejecting_modes.append(check_approximation(dcs[idx], dc_error_thr))
+
+        # Smooth the dispersion curve using the Konno-Ohmachi smoothing function
+        dcs[idx] = konno_and_ohmachi(frequencies[idx], dcs[idx], frequencies[idx])
+
+    return frequencies, dcs, flags_rejecting_modes
+
+
+def longest_continuous_trues_indices(arr: list[bool]) -> list[int]:
+    """
+    Finds the indices of the longest continuous sequence of True values in a boolean array.
+
+    Args:
+        arr: A list of boolean values (True or False).
+
+    Returns:
+        A list of integers representing the indices of the longest continuous
+        sequence of True values. Returns an empty list if the input array is empty
+        or contains no True values.  Returns the indices of the range if the array
+        contains True values but they are not contiguous.
+    """
+    max_start = max_end = current_start = -1  # Initialize start and end indices
+
+    for i, value in enumerate(arr):
+        if value:  # If the current value is True
+            if current_start == -1:
+                current_start = i  # Start a new sequence
+            current_end = i  # Update the end index of the current sequence
+
+            # Check if the current sequence is longer than the longest sequence found so far
+            if (max_start == -1) or (current_end - current_start > max_end - max_start):
+                max_start, max_end = current_start, current_end  # Update longest sequence
+        else:
+            current_start = -1  # Reset current sequence if the value is False
+
+    # Return the indices of the longest sequence, or an empty list if no True values were found
+    return list(range(max_start, max_end + 1)) if max_start != -1 else []
+
+
 def remove_outliers(x: np.ndarray, y: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     """
     Removes outliers from a curve by iterative polynomial fitting and replacement.
@@ -226,64 +317,7 @@ def konno_and_ohmachi(frequencies: np.ndarray,
     return smoothed_spectrum
 
 
-def curves_processing(frequencies: list[np.ndarray], dcs: list[np.ndarray], dc_error_thr: float, ampl: list[np.ndarray], dc_ampl_thr: float) \
-        -> tuple[list[np.ndarray], list[np.ndarray], list]:
-    """
-    Processes dispersion curves by interpolating, removing outliers, smoothing, and checking approximation.
 
-    This function performs a series of processing steps on a list of dispersion
-    curves (`dcs`) and their corresponding frequencies (`frequencies`). The steps
-    include interpolating curves with fewer than 10 points, removing outliers,
-    smoothing using the Konno-Ohmachi function, and checking the approximation
-    quality using the `check_approximation` function.
-
-    Args:
-        frequencies (List[np.ndarray]): A list of NumPy arrays representing the
-            frequencies for each dispersion curve.
-        dcs (List[np.ndarray]): A list of NumPy arrays representing the dispersion
-            curves.
-        dc_error_thr (float): A threshold for the approximation quality check.
-
-    Returns:
-        Tuple[List[np.ndarray], List[np.ndarray], List[bool]]: A tuple containing:
-            - The processed list of frequencies (List[np.ndarray]).
-            - The processed list of dispersion curves (List[np.ndarray]).
-            - A list of boolean flags indicating whether each dispersion curve
-              passed the approximation quality check (List[bool]).
-    """
-
-
-
-    # Interpolate the dispersion curve if it has fewer than 10 points
-    flags_rejecting_modes = []
-    for idx, curve in enumerate(zip(frequencies, dcs, ampl)):
-        frequency, dc, ampl_dc = curve
-
-        # print("frequency_raw, dc_raw", frequency_raw, dc_raw)
-        # frequency = frequency_raw[0]
-        # dc = dc_raw[0]
-        # for indx_ampl in range(1, len(ampl_dc)):
-        #     if ampl_dc[indx_ampl-1] - ampl_dc[indx_ampl] < 0 and ampl_dc[indx_ampl] < dc_ampl_thr:
-        #         break
-        #     frequency.append(frequency_raw[indx_ampl])
-        #     dc.append(dc_raw[indx_ampl])
-        #
-        # print("frequency, dc", frequency, dc)
-
-        if len(dc) < 10:
-            frequency_new = np.linspace(frequency.min(), frequency.max(), 10)
-            dc = interp1d(frequency, dc)(frequency_new)  # Interpolate within the range of frequency
-            frequency = np.copy(frequency_new)
-
-        # Remove outliers from the dispersion curve
-        frequencies[idx], dcs[idx] = remove_outliers(frequency, dc)
-
-        # Smooth the dispersion curve using the Konno-Ohmachi smoothing function
-        dcs[idx] = konno_and_ohmachi(frequencies[idx], dcs[idx], frequencies[idx])
-
-        flags_rejecting_modes.append(check_approximation(dcs[idx], dc_error_thr))
-
-    return frequencies, dcs, flags_rejecting_modes
 
 
 def check_approximation(dc: np.ndarray, dc_error_thr: float) -> int:
@@ -368,8 +402,13 @@ def spectral_processing(config_parameters,
     )
 
     # Curves processing
-    dc_ampl_thr = 0.9
-    frequencies, dcs, flags_rejecting_modes = curves_processing(frequencies, dcs, config_parameters.dc_error_thr, ampl, dc_ampl_thr)
+    frequencies, dcs, flags_rejecting_modes = curves_processing(
+        frequencies,
+        dcs,
+        config_parameters.dc_error_thr,
+        ampl,
+        config_parameters.cutoff_fraction
+    )
 
     spec_dc_dir, spec_image_dir, spec_segy_dir = config_parameters.save_dir_spectral
 
