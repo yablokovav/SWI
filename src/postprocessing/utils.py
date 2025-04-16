@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Dict, List, Optional
 from pathlib import Path
 
 import numpy as np
@@ -77,7 +77,7 @@ def read_curves(models, h_max, mape_thr):
     velocity = np.hstack((velocity, velocity[:, -1].reshape(-1, 1)))
     return np.array(depth), velocity, np.array(coord), np.array(relief), np.array(error)
 
-def robust_smooth_2d(y, **kwargs):
+def robust_smooth_2d(y, s: Optional[float], robust: True):
     """
     Interpolate missing values and smooth a 2D numpy array with optional robust
     outlier removal. Missing values in the array (where interpolation is
@@ -107,16 +107,11 @@ def robust_smooth_2d(y, **kwargs):
                 robust_smooth_2d(y, s=15, robust=False)
     """
 
-    if "s" in kwargs:
-        s = kwargs.get("s")
-        auto_s = False
-    else:
+    if s is None:
         auto_s = True
-
-    if "robust" in kwargs:
-        robust = kwargs.get("robust")
     else:
-        robust = True
+        auto_s = False
+
 
     size_y = np.asarray(y.shape)
     num_elements = np.prod(size_y)
@@ -125,7 +120,7 @@ def robust_smooth_2d(y, **kwargs):
     num_finite = np.sum(is_finite)
 
     # Create the Lambda tensor, which contains the eingenvalues of the
-    # difference matrix used in the penalized least squares process. We assume
+    # difference matrix used in the penalized the least squares process. We assume
     # equal spacing in horizontal and vertical here.
     lmbda = np.zeros(size_y)
     for i in range(y.ndim):
@@ -260,15 +255,15 @@ def average_models_in_bin(
 
     Args:
         coordinates: (N, 2) array of (x, y) coordinates for each velocity model.
-        error: (N,) array of error values associated with each velocity model.
+        error: (N), array of error values associated with each velocity model.
         vel_model: (M, N) array of velocity models, where M is the depth dimension and N is the number of models.
-        elevation: (N,) array of elevation values associated with each velocity model.
+        elevation: (N), array of elevation values associated with each velocity model.
 
     Returns:
         A tuple containing:
             - unique_coordinates: (K, 2) array of unique (x, y) coordinates.
             - averaged_velocities: (M, K) array of averaged velocity models for each unique coordinate.
-            - averaged_elevations: (K,) array of averaged elevation values for each unique coordinate.
+            - averaged_elevations: (K), array of averaged elevation values for each unique coordinate.
     """
 
     unique_coords, unique_indices, counts = np.unique(
