@@ -193,6 +193,18 @@ class PostprocessingChecker:
         return result, count_mistakes_postprocessing + check_remove_outliers_smoothing.is_error
 
     def __fill_missing_values(self, count_mistakes_postprocessing: int, key: str) ->tuple[str, int]:
+        """
+       Validates the 'remove_outliers_smoothing' parameter is bool.
+
+       Check if value is bool.
+
+        Args:
+            count_mistakes_postprocessing (int): Current number of validation errors.
+            key (str): Key in the config dictionary for 'fill_missing_values'.
+
+        Returns:
+            tuple: Validation result (str) and updated error count (int).
+       """
         check_fill_missing_values = check_datatype(
             self.postprocessing_config[key],
             bool
@@ -376,8 +388,9 @@ class PostprocessingChecker:
                 - An updated count of spectral errors (int).
 
         The function performs validation checks for the following parameters:
-        1. 'num_xslices_3d_ind': Checks if the value is an integer ond greater than 0.
-        2. 'num_yslices_3d_ind': Checks if the value is an integer ond greater than 0.
+        1. 'num_xslices_3d': Checks if the value is an integer ond greater than 0.
+        2. 'num_yslices_3d': Checks if the value is an integer ond greater than 0.
+        3. 'num_zslices_3d': Checks if the value is an integer ond greater than 0.
         """
         check_parameters_3d = {}
         num_xslices_3d_ind = 0
@@ -493,8 +506,8 @@ class PostprocessingChecker:
 
             (postprocessing_errors['fill_missing_values'],
              count_mistakes_postprocessing) = self.__fill_missing_values(
-                count_mistakes_postprocessing,
-                'fill_missing_values'
+                count_mistakes_postprocessing,  # Pass current error count
+                'fill_missing_values'  # Specify parameter to check
             )
 
             (postprocessing_errors['vmin_in_model'],

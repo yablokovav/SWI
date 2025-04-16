@@ -165,6 +165,19 @@ class PreprocessingChecker:
         return result, count_mistakes_preprocessing + check_type_data.is_error
 
     def __check_scaler_to_elevation(self, count_mistakes_preprocessing: int, key: str) -> tuple[str, int]:
+        """
+        Validate the 'scaler_to_elevation' configuration value.
+
+        Ensures the value is of type `float`.
+        No range validation is applied (i.e., accepted as any float).
+
+        Args:
+            count_mistakes_preprocessing (int): Current number of validation errors.
+            key (str): Key in the preprocessing config dictionary.
+
+        Returns:
+            tuple: Validation result (str) and updated error count (int).
+        """
         check_scaler_to_elevation = check_parameter_type_and_value(
             self.preprocessing_config[key],
             float,
@@ -177,6 +190,19 @@ class PreprocessingChecker:
         return result, count_mistakes_preprocessing + check_scaler_to_elevation.is_error
 
     def __check_scaler_to_coordinates(self, count_mistakes_preprocessing: int, key: str) -> tuple[str, int]:
+        """
+        Validate the 'scaler_to_coordinates' configuration value.
+
+        Ensures the value is of type `float`.
+        No range validation is applied (i.e., accepted as any float).
+
+        Args:
+            count_mistakes_preprocessing (int): Current number of validation errors.
+            key (str): Key in the preprocessing config dictionary.
+
+        Returns:
+            tuple: Validation result (str) and updated error count (int).
+        """
         check_scaler_to_coordinates = check_parameter_type_and_value(
             self.preprocessing_config[key],
             float,

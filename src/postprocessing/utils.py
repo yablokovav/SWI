@@ -8,6 +8,19 @@ from scipy.optimize import fminbound
 
 
 def define_projection(coord):
+    """
+    Automatically determine the dominant projection direction ('xz' or 'yz')
+    based on the spatial extent of coordinates.
+
+    Compares the range (peak-to-peak) of X and Y coordinates and selects the
+    direction with the greater length as the main axis of interpolation.
+
+    Args:
+        coord (np.ndarray): 2D array of shape (N, 2) containing X and Y coordinates.
+
+    Returns:
+        str: 'xz' if X direction is dominant, otherwise 'yz'.
+    """
     length_line_x, length_line_y = np.ptp(coord, axis=0)
     return "xz" if length_line_x >= length_line_y else "yz"
 
@@ -47,6 +60,31 @@ def group_files_by_basename(data_dir: Path, suffix: str = ".npz") -> Dict[str, L
     return files_by_basename
 
 def read_curves(models, h_max, mape_thr):
+    """
+    Prepare depth, velocity, and metadata from npz fiiles into arrays from a list of ModelVCR objects.
+
+    This function performs the following operations:
+        1. Determines the maximum number of layers among all models.
+        2. Pads models with fewer layers to match the maximum layer count using
+           dummy layers (thickness = 0.1 m, velocity = last valid velocity).
+        3. Constructs consistent depth and velocity arrays.
+        4. Extracts coordinates, elevation (relief), and model errors.
+        5. Filters out velocity models with MAPE (mean absolute percentage error)
+           above the threshold, replacing them with NaNs.
+
+    Args:
+        models (List[ModelVCR]): List of velocity models to process.
+        h_max (float): Maximum depth limit to pad the depth profile.
+        mape_thr (float): Error threshold (MAPE); models with higher error will be skipped.
+
+    Returns:
+        Tuple[np.ndarray]: Tuple of:
+            - depth: (N_models, N_layers+2) array with depth values.
+            - velocity: (N_models, N_layers+1) array with shear velocity values (padded).
+            - coord: (N_models, 2) array with CMP X and Y coordinates.
+            - relief: (N_models,) array with surface elevation for each model.
+            - error: (N_models,) array with model MAPE error values.
+    """
 
     # определение максимального числа слоев для всех моделей
     n_bounders = 0
