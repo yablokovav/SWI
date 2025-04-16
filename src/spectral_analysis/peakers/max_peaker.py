@@ -7,7 +7,7 @@ from src.spectral_analysis.peakers.base_peaker import Peaker
 class PeakerMax(Peaker):
     """Peaking of dispersion curves by the maximum amplitude."""
 
-    def peak_dc(self, spectra: Spectra, peak_fraction: float, cutoff_fraction: float) -> tuple[list, list, np.ndarray, np.ndarray, np.ndarray]:
+    def peak_dc(self, spectra: Spectra, peak_fraction: float, cutoff_fraction: float) -> tuple[list, list, np.ndarray, np.ndarray, np.ndarray, list]:
         """
         Determines the peaks by the maximum amplitude.
 
@@ -30,5 +30,8 @@ class PeakerMax(Peaker):
         freq, upper_limits, lower_limits, f_indx_spectrum, mask = self.apply_croping(spectra, peak_fraction)
         freq_limits = np.copy(freq)
         dc = np.argmax((spectra.vf_spectra * mask)[:, f_indx_spectrum], axis=0)
-        indx = np.where(dc>0)[0]
-        return [freq[indx]], [dc[indx]+spectra.velocities[0]], freq_limits, upper_limits, lower_limits,
+
+        mask_valid_dc = dc > 0
+        ampl = spectra.vf_spectra[dc, f_indx_spectrum[mask_valid_dc]]
+
+        return [freq[mask_valid_dc]], [dc[mask_valid_dc]+spectra.velocities[0]], freq_limits, upper_limits, lower_limits, [ampl]
