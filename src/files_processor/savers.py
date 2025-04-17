@@ -316,7 +316,6 @@ def save_model_to_bin(
         elevation (np.ndarray): A NumPy array of elevation values.
         projection (str): A string describing the profile projection ('xz' or 'yz').
     """
-
     np.savez(
         filepath,
         vs=model.T,  # Transpose the velocity model before saving

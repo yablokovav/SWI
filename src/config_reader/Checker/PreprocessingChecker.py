@@ -71,9 +71,11 @@ class PreprocessingChecker:
         Returns:
             tuple: Validation result (str) and updated error count (int).
         """
+
+
         data_dir = self.preprocessing_config[key]
-        if not os.path.isdir(data_dir):
-            error_msg = f" Error: Catalog {data_dir} not found"
+        if not os.path.isdir(data_dir) and not os.path.isfile(data_dir):
+            error_msg = f" Error: Object {data_dir} not found"
             result = (
                 str(data_dir)
                 + Message(is_error=True, message=error_msg).message
