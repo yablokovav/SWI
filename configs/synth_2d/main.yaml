@@ -65,6 +65,7 @@ postprocessing:
   d_z: 1
   smooth_factor: 10
   remove_outliers_smoothing: True
+  fill_missing_values: False
   vmin_in_model: 100
   vmax_in_model: 1200
   save_segy: False
