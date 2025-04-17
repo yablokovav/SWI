@@ -50,9 +50,15 @@ class Model3DPlotter:
             vec_1, vec_2, vec_3, 400, 400, 400
         )
 
+        # print(vec_1, vec_2, vec_3)
         if slice_plane == 'xz':
             matrix, vec_3 = Model3DPlotter.add_relief(matrix, vec_3, relief)
+            # print(matrix.shape, vec_3.shape, vec_1.shape, relief.shape)
+
+
             x, z = np.meshgrid(vec_1, vec_3)
+            # print(x.shape, z.shape, matrix[::k1, ::k3].T.shape)
+
             return go.Surface(x=x, y=vec_2, z=z, surfacecolor=matrix[::k1, ::k3].T, coloraxis='coloraxis',
                               showscale=False, opacity=0.95, name=slice_name, hoverlabel=dict(namelength=100))
 
