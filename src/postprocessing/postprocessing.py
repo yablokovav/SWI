@@ -160,10 +160,10 @@ class VelocityModelVisualizer:
 
             # Preparing new grid
             num_models, num_layers = self.velocity.shape[0], self.velocity.shape[1]
-            self.x_new = np.arange(min(self.coord[:, 0]), max(self.coord[:, 0]), self.dx)
-            self.y_new = np.arange(min(self.coord[:, 1]), max(self.coord[:, 1]), self.dy)
+            self.x_new = np.arange(min(self.coord[:, 0]), max(self.coord[:, 0]) + self.dx//2, self.dx)
+            self.y_new = np.arange(min(self.coord[:, 1]), max(self.coord[:, 1]) + self.dy//2, self.dy)
             self.z_new = np.arange(0, self.max_depth, self.dz)
-            if len(self.x_new)==1 or len(self.y_new)==1 or len(self.z_new)==1:
+            if (len(self.x_new)==1 or len(self.y_new)==1 or len(self.z_new)==1) and self.data_type == '3d':
                 raise ValueError('Interpolation Velocity Models Error:  dimension of interpolation too small, choose less dx od dy or dz.')
             self.size_x = len(self.x_new)
             self.size_y = len(self.y_new)
@@ -180,13 +180,14 @@ class VelocityModelVisualizer:
                 projection = utils.define_projection(self.coord)
 
                 if self.interp_dim == "1d":
-                    VelocityModelVisualizer.interd1d(self, num_models, num_layers, projection)
+                    VelocityModelVisualizer.interd1d(self, num_models)
                 else:
                     VelocityModelVisualizer.interd2d(self, num_layers, projection)
 
                 #smoothing model
                 if self.smooth_factor != 0:
                     self.output_model = utils.robust_smooth_2d(self.output_model, s=self.smooth_factor, robust=self.remove_outliers_smoothing)
+
 
                 #save binary-file of model
                 save_model_to_bin(self.dir_save_bin / f'{key}', self.output_model, self.x_new, self.y_new, self.z_new, self.elevation, projection)
