@@ -181,7 +181,7 @@ class VelocityModelVisualizer:
                 projection = utils.define_projection(self.coord)
 
                 if self.interp_dim == "1d":
-                    VelocityModelVisualizer.interd1d(self, projection1)
+                    VelocityModelVisualizer.interd1d(self, projection)
                 else:
                     VelocityModelVisualizer.interd2d(self, num_layers, projection)
                 #smoothing model
