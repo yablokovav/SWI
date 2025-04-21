@@ -144,6 +144,9 @@ class VelocityModelVisualizer:
         if not files_by_basename:
             raise ValueError('Interpolation Velocity Models Error: No files with dispersion curves.')
 
+        for i in files_by_basename:
+            print(i)
+
         for key in files_by_basename.keys():
             # Reading all files with 1d models and preparing ModelVCR-dataclass
             models = [ModelVCR.load(file) for file in files_by_basename[key]]
@@ -176,6 +179,8 @@ class VelocityModelVisualizer:
             self.size_y = len(self.y_new)
             if (len(self.x_new)==1 or len(self.y_new)==1 or len(self.z_new)==1) and self.data_type == '3d':
                 raise ValueError('Interpolation Velocity Models Error:  dimension of interpolation too small, choose less dx od dy or dz.')
+
+
 
             if  self.data_type == "2d":
                 projection = utils.define_projection(self.coord)
@@ -346,7 +351,7 @@ class VelocityModelVisualizer:
         self.x_new, self.y_new = x_grid.reshape(self.size_x * self.size_y), y_grid.reshape(self.size_x * self.size_y)
         self.output_model = vs3d.reshape((self.size_x * self.size_y, self.size_z)).T
         self.elevation = np.int32(self.elevation).reshape(self.size_x * self.size_y)
-        self.elevation[np.argwhere(np.isnan(self.output_model[:, 0]))] = np.nan
+        # self.elevation[np.argwhere(np.isnan(self.output_model[:, 0]))] = np.nan
 
     def save_model_yz_slices(self, key):
         """

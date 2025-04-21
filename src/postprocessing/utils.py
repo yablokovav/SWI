@@ -53,7 +53,8 @@ def group_files_by_basename(data_dir: Path, suffix: str = ".npz") -> Dict[str, L
 
         # Remove trailing digits from the basename to group files with indices together
         # This assumes indices are at the end of the filename before the extension
-        base_name_without_index = basename.rstrip('0123456789.-')
+        # base_name_without_index = basename.rstrip('0123456789.-')
+        base_name_without_index = basename.split(".")[0]
         files_by_basename.setdefault(base_name_without_index, []).append(file_path)
 
 
