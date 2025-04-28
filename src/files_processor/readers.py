@@ -11,6 +11,72 @@ HEADER_FIELD_CDP = 21
 HEADER_FIELD_FFID = 9
 
 
+def seismic_trace_generator(filename: Path, segy_filename: Path, ranges: tuple, header_field: int = 9):
+    """
+    Generator that reads a file and yields seismic traces grouped by source (FFID).
+
+    If a text file is provided, it reads trace-source pairs and groups traces by source index.
+    If no text file is given, it reads from a SEG-Y file and groups traces using header field values.
+
+    Args:
+        filename (Path): Path to a text file with trace-source index pairs.
+        segy_filename (Path): Path to a SEG-Y file to read traces from.
+        ranges (tuple): A tuple of (start, stop, step) for filtering source indices (FFIDs).
+        header_field (int): Header field index to use for source identification in SEG-Y (default: 9).
+
+    Yields:
+        List[int]: A list of trace indices belonging to the same source.
+    """
+    start, stop, increment = ranges
+    ffid = np.int32(np.arange(start, stop+1, increment)) if increment else None
+    if filename:
+        with open(filename, 'r') as file:
+            current_source = None
+            current_traces = []
+
+            for line in file:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    trace_num, source_index = map(int, line.split())
+                    trace_num -= 1
+                except ValueError:
+                    continue
+
+                if source_index != current_source:
+                    if current_traces and (current_source in ffid if increment else True):
+                        yield current_traces
+                    current_source = source_index
+                    current_traces = [trace_num]
+                else:
+                    current_traces.append(trace_num)
+
+            if current_traces and (current_source in ffid if increment else True):
+                yield current_traces
+    else:
+        with segyio.open(segy_filename.as_posix(), 'r', ignore_geometry=True) as segy:
+            current_source = None
+            current_traces = []
+
+            for trace_num in range(segy.tracecount):
+                source_index = segy.header[trace_num][header_field]
+
+                if current_source is None:
+                    current_source = source_index
+
+                if source_index != current_source:
+                    if current_traces and (current_source in ffid if increment else True):
+                        yield current_traces
+                    current_source = source_index
+                    current_traces = [trace_num]
+                else:
+                    current_traces.append(trace_num)
+            if current_traces and (current_source in ffid if increment else True):
+                yield current_traces
+
+
+
 
 def get_filenames(data_dir: Path, suffix: Union[tuple[str], str] = (".sgy", ".segy")) -> Generator[Path, None, None]:
     """

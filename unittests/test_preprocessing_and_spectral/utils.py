@@ -89,6 +89,8 @@ def compare_npz_folders(folder1_path: str, folder2_path: str) -> bool:
 
         # Compare lists oof files
         if files1 != files2:
+            print(files1, flush=True)
+            print(files2, flush=True)
             print("Mismatch between names of npz files>")
             return False
 

@@ -6,7 +6,6 @@ preprocessing:
   num_sources_on_cpu: 1
   path4ffid_file: C:\Users\BubnovEI\Desktop\SWI_project\SWI\unittests\data_csp_test\ffid.txt
 
-
   data_dir: C:\Users\BubnovEI\Desktop\SWI_project\SWI\unittests\data_csp_test
   scaler_to_elevation: -10000
   scaler_to_coordinates: -100
@@ -71,6 +70,7 @@ postprocessing:
   save_segy: True
   error_thr: 0.4
   save_fdm: True
+  fill_missing_values: False
 
   parameters_2d:
     interp_dim: 1d
