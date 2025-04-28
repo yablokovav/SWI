@@ -16,7 +16,7 @@ class Model3DPlotter:
                                    new_shape_1: int, new_shape_2: int, new_shape_3: int) -> tuple:
         k1 = int(np.ceil(np.size(vec_1) / new_shape_1))
         k2 = int(np.ceil(np.size(vec_2) / new_shape_2))     
-        k3 = int(np.ceil(np.size(vec_3) / new_shape_3))     
+        k3 = int(np.ceil(np.size(vec_3) / new_shape_3))
         return k1, k2, k3, vec_1[::k1], vec_2[::k2], vec_3[::k3]
 
     @staticmethod
