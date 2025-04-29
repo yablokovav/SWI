@@ -1,12 +1,29 @@
 import logging  # For logging events and errors during processing
-import numpy as np  # For numerical operations, especially array manipulation
 from pathlib import Path  # For working with file paths in an object-oriented way
+
+import numpy as np  # For numerical operations, especially array manipulation
+
 from src import *  # For constants
 from src.logs.Message import Message  # Special dataclass for log messages
 from src.preprocessing.utils import define_spatial_step  # Function to calculate spatial step size
 
 
 def setup_loger(config_parameters):
+    """
+    Sets up a logger for preprocessing and spectral analysis.
+
+    The logger is configured to write debug-level messages to a file.
+
+    Args:
+        config_parameters: An object containing configuration parameters,
+                           including the directory to save the log file.  It is expected
+                           to have the attribute `save_dir_preprocessing` which is a list.
+                           The Path of the log file will be 3 levels up from the first
+                           Path object in that list and named "preprocessing_and_spectral_analysing.log".
+
+    Returns:
+        A tuple containing the configured logger and the file handler.
+    """
     path_log = config_parameters.save_dir_preprocessing[0].parents[2] / "preprocessing_and_spectral_analysing.log"
     logger = logging.getLogger("preprocessing_and_spectral_logger")
     logger.setLevel(logging.DEBUG)
@@ -17,6 +34,27 @@ def setup_loger(config_parameters):
     return logger, handler
 
 def close_logger(config_parameters):
+    """
+    Closes the logger and logs summary information about the preprocessing and spectral analysis.
+
+    Logs the number of preprocessed seismograms and saved dispersion curves.
+    Also logs messages indicating where the results were saved, and errors if no
+    seismograms were preprocessed or no dispersion curves were saved.  Closes the file handler.
+
+    Args:
+        config_parameters: An object containing configuration parameters, including:
+                           - `logger`: The logger object to close.
+                           - `handler`: The file handler to close.
+                           - `count_preprocessed_seismograms`: The number of preprocessed seismograms.
+                           - `count_dispersion_curves`: The number of saved dispersion curves.
+                           - `qc_preprocessing`: A boolean indicating whether preprocessing QC was enabled.
+                           - `qc_spectral`: A boolean indicating whether spectral analysis QC was enabled.
+                           - `save_dir_preprocessing`: A list containing the directory where preprocessed
+                             seismograms were saved.
+                           - `save_dir_spectral`: A list containing the directories where dispersion curves,
+                             images of dispersion curves, and SEGY files of dispersion curves were saved. It is
+                             expected to have at least 3 Path objects.
+    """
     config_parameters.logger.info(f"Preprocessed seismograms: {config_parameters.count_preprocessed_seismograms}")
     config_parameters.logger.info(f"Saved dispersion curves: {config_parameters.count_dispersion_curves}")
 

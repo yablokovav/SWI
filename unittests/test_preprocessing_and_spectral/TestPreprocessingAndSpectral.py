@@ -47,25 +47,25 @@ class TestPreprocessingAndSpectral(unittest.TestCase):
                             "Incorrect directory with preprocessed segy files")
             print("Function made task correctly")
 
-    # def test_preprocessing_and_spectral_cdp(self):
-    #     preprocessing, spectral, inversion, postprocessing = get_params(
-    #         PARAMS_DIR_CDP, SWI_DIR
-    #     )
-    #
-    #     module_dirs = create_directories(preprocessing,
-    #                                      spectral,
-    #                                      inversion,
-    #                                      SWI_DIR)
-    #
-    #     SeismicPreprocessorSpectral.open(preprocessing, spectral, module_dirs).run()
-    #
-    #     self.assertTrue(compare_npz_folders(module_dirs["spectral_analysis"][0], TEST_PATH_NPZ_CDP),
-    #                     "Incorrect directory with npz files")
-    #     self.assertTrue(compare_segy_folders(module_dirs["spectral_analysis"][2], TEST_PATH_SPEC_SEGY_CDP),
-    #                     "Incorrect directory with spectral segy files")
-    #     self.assertTrue(compare_segy_folders(module_dirs["preprocessing"][0], TEST_PATH_PREP_SEGY_CDP),
-    #                     "Incorrect directory with preprocessed segy files")
-    #     print("Function made task correctly")
+    def test_preprocessing_and_spectral_cdp(self):
+        preprocessing, spectral, inversion, postprocessing = get_params(
+            PARAMS_DIR_CDP, SWI_DIR
+        )
+
+        module_dirs = create_directories(preprocessing,
+                                         spectral,
+                                         inversion,
+                                         SWI_DIR)
+
+        SeismicPreprocessorSpectral.open(preprocessing, spectral, module_dirs).run()
+
+        self.assertTrue(compare_npz_folders(module_dirs["spectral_analysis"][0], TEST_PATH_NPZ_CDP),
+                        "Incorrect directory with npz files")
+        self.assertTrue(compare_segy_folders(module_dirs["spectral_analysis"][2], TEST_PATH_SPEC_SEGY_CDP),
+                        "Incorrect directory with spectral segy files")
+        self.assertTrue(compare_segy_folders(module_dirs["preprocessing"][0], TEST_PATH_PREP_SEGY_CDP),
+                        "Incorrect directory with preprocessed segy files")
+        print("Function made task correctly")
 
 if __name__ == '__main__':
     unittest.main()

@@ -71,6 +71,7 @@ postprocessing:
   vmax_in_model: 1400
   save_segy: True
   error_thr: 0.2
+  fill_missing_values: False
 
   parameters_2d:
     interp_dim: 1d
