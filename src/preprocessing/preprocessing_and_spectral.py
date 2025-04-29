@@ -409,7 +409,7 @@ class SeismicPreprocessorSpectral:
 
         # Add segment information to the log
         cdp_log = create_table_preprocessing_3d_cdp(curr_headers, snr)
-        log_cdp.append(cdp_log[2])  # Append the cdp log data
+        log_cdp.append(cdp_log)  # Append the cdp log data
         if not valid_modes:
             log_cdp[-1] = log_cdp[-1] + " Warning: no found valid modes"
         elif snr < self.user_snr:
