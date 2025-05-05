@@ -384,7 +384,7 @@ def spectral_processing(config_parameters,
 
     # Extract relief from the headers
     num_traces = len(seismogram.headers[HEADER_ELEV_IND])
-    relief_cur = seismogram.headers[HEADER_ELEV_IND, int(num_traces / 2)]
+    relief_cur = float(seismogram.headers[HEADER_ELEV_IND, int(num_traces / 2)])
 
     # Extract CMP coordinates from the headers
     cmp_x, cmp_y = headers[HEADER_CDP_X_IND:HEADER_CDP_Y_IND + 1, 0]
@@ -425,7 +425,9 @@ def spectral_processing(config_parameters,
                         spectra,
                         frequencies,
                         dcs,
-                        (cmp_x, cmp_y))
+                        (cmp_x, cmp_y),
+                        relief_cur,
+                       )
 
 
     # Save the spectral analysis results if quality control is enabled

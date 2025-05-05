@@ -13,6 +13,7 @@ plt.switch_backend('Agg')
 HEADER_BYTE_FOR_FREQ = 0
 HEADER_BYTE_CDP_X = 71
 HEADER_BYTE_CDP_Y = 72
+RELIEF_BYTE_CDP_Y = 73
 MAX_POSSIBLE_NUM_MODS = 70
 MULTIPLIER_FOR_FREQ_IN_SEGY = 1000  # Multiplier for correct saving values of frequencies in SEGY-file
 MULTIPLIER_FOR_DT_IN_SEGY = 1e6  # Multiplier for correct saving dt in SEGY-file
@@ -227,7 +228,8 @@ def save_spec_segy(
         spectra: 'Spectra',
         frequencies: list,
         dcs: list,
-        cdp: tuple
+        cdp: tuple,
+        relief: float,
 ) -> None:
     """
     Saves spectrogram and dispersion curve data to a SEGY file.
@@ -257,6 +259,7 @@ def save_spec_segy(
     freq_header_byte = [header_byte[HEADER_BYTE_FOR_FREQ]]
     cdp_x_header_byte = [header_byte[HEADER_BYTE_CDP_X]]
     cdp_y_header_byte = [header_byte[HEADER_BYTE_CDP_Y]]
+    relief_header_byte = [header_byte[RELIEF_BYTE_CDP_Y]]
 
     dc_header_bytes = []
     headers_dc = np.zeros((num_modes, nf))
@@ -277,7 +280,8 @@ def save_spec_segy(
         (spectra.frequencies*MULTIPLIER_FOR_FREQ_IN_SEGY,
          headers_dc,
          np.repeat(cdp[0], repeats=nf),
-         np.repeat(cdp[1], repeats=nf)
+         np.repeat(cdp[1], repeats=nf),
+         np.repeat(relief, repeats=nf),
          )
     )
 
@@ -286,7 +290,7 @@ def save_spec_segy(
         Path(segy_name),
         np.float32(spectra.vf_spectra),
         all_headers,
-        tuple(freq_header_byte + dc_header_bytes + cdp_x_header_byte + cdp_y_header_byte),
+        tuple(freq_header_byte + dc_header_bytes + cdp_x_header_byte + cdp_y_header_byte + relief_header_byte),
         spectra.d_vel/DIVIDER_FOR_VEL_IN_SEGY
     )
 

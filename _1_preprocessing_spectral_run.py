@@ -18,8 +18,8 @@ status = MPI.Status()
 
 if rank == 0:
     root_dir = Path("").resolve()
-    params_dir = root_dir / "configs/real_3d/main.yaml"
-    # params_dir = root_dir / "configs/synth_2d/main.yaml"
+    # params_dir = root_dir / "configs/real_3d/main.yaml"
+    params_dir = root_dir / "configs/synth_2d/main.yaml"
     swi_dir = root_dir / "runs"
     try:
         preprocessing, spectral, inversion, postprocessing = ConfigReader.read(params_dir, SWIConfigModel, swi_dir, show=False)
