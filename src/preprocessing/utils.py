@@ -183,6 +183,68 @@ def get_part_data(
     return None, None
 
 
+
+def data_partition(
+    traces: np.ndarray, headers: np.ndarray, sort_3d_order: str = "",
+) -> Generator[tuple[Any, Any], None, None]:
+
+    """
+        Partitions seismic data (traces and headers) into segments based on coordinate equality.
+
+        This function takes seismic traces and their corresponding headers and splits them
+        into segments where the coordinates (either CDP or source) are the same.  It yields
+        a tuple of (seismogram segment, header segment) for each unique coordinate.
+
+        Args:
+            traces (np.ndarray): A 2D NumPy array representing the seismic traces.
+                                   Shape: (number of samples, number of traces).
+            headers (np.ndarray): A 2D NumPy array representing the trace headers.
+                                   Shape: (number of header fields, number of traces).
+            sort_3d_order (str, optional): Specifies the coordinate system to use for partitioning.
+                                           If "cdp", uses CDP coordinates (CDP_X, CDP_Y).
+                                           Otherwise, uses source coordinates (SOU_X, SOU_Y).
+                                           Defaults to "".
+
+        Yields:
+            Generator[Tuple[Optional[np.ndarray], Optional[np.ndarray]], None, None]:
+                A generator that yields tuples of:
+                - curr_seismogram (np.ndarray, optional): A 2D NumPy array representing the
+                  seismic traces for the current segment.  None if no traces found.
+                - curr_headers (np.ndarray, optional): A 2D NumPy array representing the
+                  headers for the current segment.  None if no headers found.
+        """
+    # Initialize the starting index for the current segment
+    start = 0
+    if sort_3d_order == "cdp":
+        # Use CDP coordinates (CDP_X, CDP_Y) for partitioning
+        keys_for_partition = headers[HEADER_CDP_IND]
+    else:
+        # Use source coordinates (SOU_X, SOU_Y) for partitioning
+        keys_for_partition = headers[HEADER_FFID_IND]
+    # Iterate through the coordinate keys
+
+    # Old variant of dividing data by keys, may be faster, but need previously sorting data by specified headers
+    # for key in range(length := len(keys_for_partition)):
+    #     # Check if this is the last trace or if the coordinates change
+    #     if (key == length - 1) or keys_for_partition[key] != keys_for_partition[key + 1]:
+    #         # Extract the seismic traces and headers for the current segment
+    #         curr_seismogram = traces[:, start: key + 1]
+    #         curr_headers = headers[:, start: key + 1]
+    #
+    #         # Yield the current segment
+    #         yield curr_seismogram, curr_headers
+    #
+    #         # Update the starting index for the next segment
+    #         start = key + 1
+
+    unique_keys_for_partition = np.unique(keys_for_partition)
+    for key in unique_keys_for_partition:
+        part_indexes = np.where(keys_for_partition == key)[0]
+        curr_seismogram = traces[:, part_indexes]
+        curr_headers = headers[:, part_indexes]
+        yield curr_seismogram, curr_headers
+
+
 def step_on_generator(config_parameters, gen, file_path):
     current_indexes = next(gen)
 

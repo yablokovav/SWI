@@ -11,8 +11,6 @@ from src.config_reader.models import SWIConfigModel
 from src.config_reader.utils import create_directories
 from src.config_reader.Checker.exceptions import InvalidConfigurationParameters
 
-
-
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 size = comm.Get_size()

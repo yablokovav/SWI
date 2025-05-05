@@ -467,6 +467,7 @@ class SeismicPreprocessorSpectral:
                     self.comm.send(seismic_data, dest=rank, tag=1)
                     worker_status[rank] = True
                 except StopIteration:
+
                     break  # No more data to distribute
 
             # Count how many workers are currently active
